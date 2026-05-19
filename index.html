@@ -4,57 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Каталог фильмов</title>
-    <link href="https://jsdelivr.net" rel="stylesheet" />
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f3f4f6; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f3f4f6; color: #1f2937; }
         .container { max-width: 100%; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         h2 { color: #1f2937; margin-bottom: 20px; font-size: 22px; }
-        .gridjs-td { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .gridjs-td:hover { white-space: normal; overflow: visible; background: #fff; position: relative; z-index: 99; }
+        .search-box { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 20px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; }
+        .table-wrapper { overflow-x: auto; max-height: 750px; border: 1px solid #e5e7eb; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; background: white; }
+        th { background-color: #f9fafb; padding: 12px 16px; font-weight: 600; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 5; }
+        td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        tr:hover td { background-color: #f9fafb; white-space: normal; overflow: visible; word-break: break-word; }
+        .loading { padding: 30px; font-size: 18px; color: #6b7280; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Каталог медиафайлов (Автообновление из Google Таблиц)</h2>
-    <div id="table-container">Загрузка каталога, пожалуйста подождите...</div>
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск фильма, жанра или актера...">
+    
+    <div class="table-wrapper">
+        <div id="loading-status" class="loading">Загрузка данных из Google...</div>
+        <table id="data-table" style="display: none;">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
 </div>
 
-<script src="https://jsdelivr.net"></script>
-<script src="https://jsdelivr.net"></script>
+<!-- Используем стабильную библиотеку PapaParse из гарантированно доступного хранилища Яндекса -->
+<script src="https://yastatic.net"></script>
 
 <script>
     window.onload = function() {
-        const gsheetUrl = "https://google.com";
+        const csvUrl = "https://google.com";
 
-        Papa.parse(gsheetUrl, {
+        const loadingText = document.getElementById('loading-status');
+        const table = document.getElementById('data-table');
+
+        if (typeof Papa === 'undefined') {
+            loadingText.innerText = "Ошибка: не удалось загрузить парсер. Попробуйте отключить VPN или сменить сеть.";
+            return;
+        }
+        
+        Papa.parse(csvUrl, {
             download: true,
             skipEmptyLines: 'greedy',
             complete: function(results) {
                 const rows = results.data;
                 if (!rows || rows.length < 2) {
-                    document.getElementById("table-container").innerText = "Таблица пуста или к ней нет доступа.";
+                    loadingText.innerText = "Таблица пуста или к ней заблокирован доступ в Google.";
                     return;
                 }
+                
+                // Извлекаем заголовки со второй строчки (так как первая у вас объединена)
+                const headers = rows[1];
+                const headHtml = '<tr>' + headers.map(h => `<th>${h || ''}</th>`).join('') + '</tr>';
+                document.getElementById('table-head').innerHTML = headHtml;
 
-                document.getElementById("table-container").innerHTML = "";
+                // Извлекаем фильмы начиная со 3-й строчки
+                const dataRows = rows.slice(2);
+                const bodyHtml = dataRows.map(row => {
+                    return `<tr class="data-row">${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
+                }).join('');
+                
+                document.getElementById('table-body').innerHTML = bodyHtml;
+                
+                // Показываем готовую таблицу
+                loadingText.style.display = 'none';
+                table.style.display = 'table';
 
-                new gridjs.Grid({
-                    columns: rows[1], // Берем ВТОРУЮ строку таблицы как заголовки (Год, Название и т.д.)
-                    data: rows.slice(2), // Данные начинаются с третьей строки
-                    search: true,
-                    sort: true,
-                    resizable: true,
-                    pagination: { limit: 25 },
-                    language: {
-                        'search': { 'placeholder': 'Поиск фильма или актера...' },
-                        'pagination': { 'previous': '◀', 'next': '▶', 'showing': 'Показано', 'to': 'из', 'of': 'всего', 'results': 'фильмов' }
-                    }
-                }).render(document.getElementById("table-container"));
+                // Моментальный встроенный поиск
+                document.getElementById('search-input').addEventListener('input', function() {
+                    const query = this.value.toLowerCase();
+                    const tableRows = document.querySelectorAll('.data-row');
+                    
+                    tableRows.forEach(row => {
+                        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+                    });
+                });
             },
             error: function(err) {
-                document.getElementById("table-container").innerText = "Ошибка загрузки данных из Google.";
-                console.error(err);
+                loadingText.innerText = "Google заблокировал запрос. Проверьте статус общего доступа таблицы.";
+                console.error(error);
             }
         });
     };
