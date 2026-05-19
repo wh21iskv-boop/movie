@@ -216,7 +216,7 @@
         // 2. Файл → Опубликовать в интернете
         // 3. Выберите "Весь документ" → формат "CSV"
         // 4. Скопируйте ссылку и вставьте ниже
-        const GOOGLE_SHEET_CSV_URL = 'ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_СЮДА';
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/11eaKYcUOU6R7xIUMQ8fXZXY_RgA4GDKrJnTGJ5nMhXo/export?format=csvА';
         
         let allMovies = [];
         let uniqueGenres = new Set();
@@ -225,7 +225,7 @@
         async function loadMovies() {
             const contentDiv = document.getElementById('content');
             
-            if (GOOGLE_SHEET_CSV_URL === 'ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_СЮДА') {
+            if (GOOGLE_SHEET_CSV_URL === 'https://docs.google.com/spreadsheets/d/11eaKYcUOU6R7xIUMQ8fXZXY_RgA4GDKrJnTGJ5nMhXo/export?format=csv') {
                 contentDiv.innerHTML = `
                     <div class="error">
                         ⚠️ Настройка таблицы<br><br>
