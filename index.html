@@ -3,101 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Каталог фильмов</title>
+    <title>Каталог медиафайлов</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f3f4f6; color: #1f2937; }
-        .container { max-width: 100%; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { color: #1f2937; margin-bottom: 20px; font-size: 22px; }
-        .search-box { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 20px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; }
-        .table-wrapper { overflow-x: auto; max-height: 750px; border: 1px solid #e5e7eb; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: white; }
-        th { background-color: #f9fafb; padding: 12px 16px; font-weight: 600; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 5; }
-        td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        tr:hover td { background-color: #f9fafb; white-space: normal; overflow: visible; word-break: break-word; }
-        .loading { padding: 30px; font-size: 18px; color: #6b7280; text-align: center; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #eee;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .search-section {
+            margin-bottom: 30px;
+        }
+        
+        #searchInput {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #2d3561;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #searchInput:focus {
+            border-color: #667eea;
+            background: rgba(255,255,255,0.15);
+        }
+        
+        #searchInput::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        select {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid #2d3561;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        select option {
+            background: #1a1a2e;
+        }
+        
+        .stats {
+            text-align: right;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+        
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .movie-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.12);
+        }
+        
+        .movie-poster {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            background: #1a1a2e;
+        }
+        
+        .movie-poster-placeholder {
+            width: 100%;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2d3561 0%, #1a1a2e 100%);
+            font-size: 48px;
+        }
+        
+        .movie-info {
+            padding: 15px;
+        }
+        
+        .movie-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: white;
+        }
+        
+        .movie-genre {
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-bottom: 8px;
+        }
+        
+        .movie-actors {
+            font-size: 12px;
+            color: #b0b0b0;
+            line-height: 1.4;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 18px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            background: rgba(220, 53, 69, 0.2);
+            border-radius: 15px;
+            margin: 20px;
+            color: #ff6b6b;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px;
+            font-size: 18px;
+            color: rgba(255,255,255,0.5);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>Каталог медиафайлов (Автообновление из Google Таблиц)</h2>
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск фильма, жанра или актера...">
-    
-    <div class="table-wrapper">
-        <div id="loading-status" class="loading">Загрузка данных из Google Таблиц...</div>
-        <table id="data-table" style="display: none;">
-            <thead id="table-head"></thead>
-            <tbody id="table-body"></tbody>
-        </table>
+    <div class="container">
+        <h1>🎬 Каталог медиафайлов</h1>
+        
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск фильма, жанра или актера...">
+            <div class="filters">
+                <select id="genreFilter">
+                    <option value="">Все жанры</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                Загрузка каталога...
+            </div>
+        </div>
     </div>
-</div>
 
-<script>
-    // Встроенный ручной разбор CSV без сторонних библиотек
-    function parseCSV(text) {
-        let lines = text.split(/\r?\n/);
-        return lines.map(line => {
-            let result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                let char = line[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            result.push(current.trim());
-            return result;
-        }).filter(row => row.length > 0 && row.some(cell => cell !== ""));
-    }
-
-    window.onload = async function() {
-        const csvUrl = "https://google.com";
-        const loadingText = document.getElementById('loading-status');
-        const table = document.getElementById('data-table');
-
-        try {
-            const response = await fetch(csvUrl);
-            if (!response.ok) throw new Error('Ошибка загрузки файла');
-            const text = await response.text();
+    <script>
+        // ⚠️ ВСТАВЬТЕ ВАШУ ССЫЛКУ СЮДА ⚠️
+        // Как получить ссылку:
+        // 1. Откройте Google Таблицу
+        // 2. Файл → Опубликовать в интернете
+        // 3. Выберите "Весь документ" → формат "CSV"
+        // 4. Скопируйте ссылку и вставьте ниже
+        const GOOGLE_SHEET_CSV_URL = 'ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_СЮДА';
+        
+        let allMovies = [];
+        let uniqueGenres = new Set();
+        
+        // Функция загрузки данных из Google Sheets
+        async function loadMovies() {
+            const contentDiv = document.getElementById('content');
             
-            const rows = parseCSV(text);
-            if (rows.length < 2) {
-                loadingText.innerText = "Таблица пуста или данные некорректны.";
+            if (GOOGLE_SHEET_CSV_URL === 'ВСТАВЬТЕ_ВАШУ_ССЫЛКУ_СЮДА') {
+                contentDiv.innerHTML = `
+                    <div class="error">
+                        ⚠️ Настройка таблицы<br><br>
+                        Добавьте ссылку на вашу Google Таблицу в переменную GOOGLE_SHEET_CSV_URL.<br><br>
+                        <strong>Как получить ссылку:</strong><br>
+                        1. Откройте Google Таблицу<br>
+                        2. Файл → Опубликовать в интернете<br>
+                        3. Выберите формат CSV<br>
+                        4. Скопируйте ссылку
+                    </div>
+                `;
                 return;
             }
-
-            // Берем 2-ю строку как заголовки (Год, Название...)
-            const headers = rows[1];
-            document.getElementById('table-head').innerHTML = '<tr>' + headers.map(h => `<th>${h || ''}</th>`).join('') + '</tr>';
-
-            // Выводим данные с 3-й строки
-            const dataRows = rows.slice(2);
-            document.getElementById('table-body').innerHTML = dataRows.map(row => {
-                return `<tr class="data-row">${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
-            }).join('');
-
-            loadingText.style.display = 'none';
-            table.style.display = 'table';
-
-            // Живой поиск
-            document.getElementById('search-input').addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                document.querySelectorAll('.data-row').forEach(row => {
-                    row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            
+            try {
+                console.log('Загрузка данных из:', GOOGLE_SHEET_CSV_URL);
+                
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                console.log('Получено данных:', csvText.length, 'символов');
+                
+                // Парсим CSV
+                const rows = parseCSV(csvText);
+                
+                if (rows.length < 2) {
+                    throw new Error('Таблица пуста или имеет неправильный формат');
+                }
+                
+                // Предполагаем, что первая строка - заголовки
+                const headers = rows[0].map(h => h.toLowerCase().trim());
+                
+                // Определяем колонки (поддержка русских и английских названий)
+                const titleCol = findColumn(headers, ['название', 'title', 'фильм', 'movie', 'наименование', 'name']);
+                const genreCol = findColumn(headers, ['жанр', 'genre', 'категория', 'category']);
+                const actorsCol = findColumn(headers, ['актеры', 'actors', 'актёры', 'actor', 'звезды', 'stars']);
+                const posterCol = findColumn(headers, ['постер', 'poster', 'картинка', 'image', 'url', 'ссылка']);
+                
+                // Преобразуем данные
+                allMovies = rows.slice(1).filter(row => row.length > 0 && row[titleCol]?.trim()).map(row => ({
+                    title: row[titleCol]?.trim() || 'Без названия',
+                    genre: row[genreCol]?.trim() || 'Не указан',
+                    actors: row[actorsCol]?.trim() || 'Не указаны',
+                    poster: row[posterCol]?.trim() || ''
+                }));
+                
+                console.log('Загружено фильмов:', allMovies.length);
+                
+                if (allMovies.length === 0) {
+                    throw new Error('Не найдено фильмов в таблице');
+                }
+                
+                // Собираем уникальные жанры
+                allMovies.forEach(movie => {
+                    movie.genre.split(/[,;]/).forEach(g => {
+                        const genre = g.trim();
+                        if (genre && genre !== 'Не указан') {
+                            uniqueGenres.add(genre);
+                        }
+                    });
                 });
-            });
-
-        } catch (err) {
-            loadingText.innerText = "Не удалось подключиться к Google Таблице. Проверьте сеть.";
-            console.error(err);
+                
+                // Заполняем фильтр жанров
+                const genreSelect = document.getElementById('genreFilter');
+                genreSelect.innerHTML = '<option value="">Все жанры</option>';
+                Array.from(uniqueGenres).sort().forEach(genre => {
+                    genreSelect.innerHTML += `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`;
+                });
+                
+                // Отображаем фильмы
+                displayMovies(allMovies);
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="error">
+                        ❌ Ошибка загрузки данных<br><br>
+                        ${escapeHtml(error.message)}<br><br>
+                        <strong>Проверьте:</strong><br>
+                        • Правильно ли скопирована ссылка на CSV<br>
+                        • Опубликована ли таблица (Файл → Опубликовать в интернете)<br>
+                        • Есть ли данные в таблице<br>
+                        • Первая строка содержит заголовки (Название, Жанр, Актеры)
+                    </div>
+                `;
+            }
         }
-    };
-</script>
+        
+        // Парсинг CSV с поддержкой кавычек и запятых внутри полей
+        function parseCSV(csvText) {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                    if (char === '\r') i++;
+                    currentRow.push(currentField.trim());
+                    if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
+                        rows.push(currentRow);
+                    }
+                    currentRow = [];
+                    currentField = '';
+                } else {
+                    currentField += char;
+                }
+            }
+            
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
+                    rows.push(currentRow);
+                }
+            }
+            
+            return rows;
+        }
+        
+        function findColumn(headers, possibleNames) {
+            for (let i = 0; i < headers.length; i++) {
+                if (possibleNames.some(name => headers[i].includes(name))) {
+                    return i;
+                }
+            }
+            return 0; // возвращаем первую колонку если не нашли
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function displayMovies(movies) {
+            const contentDiv = document.getElementById('content');
+            const statsDiv = document.getElementById('stats');
+            
+            statsDiv.innerHTML = `📊 Найдено: ${movies.length} фильмов`;
+            
+            if (movies.length === 0) {
+                contentDiv.innerHTML = '<div class="no-results">😔 Ничего не найдено</div>';
+                return;
+            }
+            
+            const moviesHtml = `
+                <div class="movies-grid">
+                    ${movies.map(movie => `
+                        <div class="movie-card" onclick="alert('🎬 ${escapeHtml(movie.title)}\\n\\n📁 Жанр: ${escapeHtml(movie.genre)}\\n\\n⭐ Актеры: ${escapeHtml(movie.actors)}')">
+                            ${movie.poster && movie.poster.startsWith('http') ? 
+                                `<img class="movie-poster" src="${escapeHtml(movie.poster)}" alt="${escapeHtml(movie.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'movie-poster-placeholder\\'>🎬</div>'">` :
+                                `<div class="movie-poster-placeholder">🎬</div>`
+                            }
+                            <div class="movie-info">
+                                <div class="movie-title">${escapeHtml(movie.title)}</div>
+                                <div class="movie-genre">📁 ${escapeHtml(movie.genre)}</div>
+                                <div class="movie-actors">⭐ ${escapeHtml(movie.actors.length > 100 ? movie.actors.substring(0, 100) + '...' : movie.actors)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            contentDiv.innerHTML = moviesHtml;
+        }
+        
+        function filterMovies() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedGenre = document.getElementById('genreFilter').value;
+            
+            const filtered = allMovies.filter(movie => {
+                // Поиск по названию, жанру, актерам
+                const matchesSearch = !searchTerm || 
+                    movie.title.toLowerCase().includes(searchTerm) ||
+                    movie.genre.toLowerCase().includes(searchTerm) ||
+                    movie.actors.toLowerCase().includes(searchTerm);
+                
+                // Фильтр по жанру
+                let matchesGenre = !selectedGenre;
+                if (selectedGenre && !matchesGenre) {
+                    const movieGenres = movie.genre.split(/[,;]/).map(g => g.trim());
+                    matchesGenre = movieGenres.includes(selectedGenre);
+                }
+                
+                return matchesSearch && matchesGenre;
+            });
+            
+            displayMovies(filtered);
+        }
+        
+        // Обработчики событий с debounce для поиска
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterMovies, 300);
+        });
+        
+        document.getElementById('genreFilter').addEventListener('change', filterMovies);
+        
+        // Запуск при загрузке страницы
+        loadMovies();
+    </script>
 </body>
 </html>
