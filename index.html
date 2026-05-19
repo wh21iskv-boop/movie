@@ -24,7 +24,7 @@
     <input type="text" id="search-input" class="search-box" placeholder="Поиск фильма, жанра или актера...">
     
     <div class="table-wrapper">
-        <div id="loading-status" class="loading">Загрузка данных из Google...</div>
+        <div id="loading-status" class="loading">Загрузка данных из Google Таблиц...</div>
         <table id="data-table" style="display: none;">
             <thead id="table-head"></thead>
             <tbody id="table-body"></tbody>
@@ -32,63 +32,71 @@
     </div>
 </div>
 
-<!-- Используем стабильную библиотеку PapaParse из гарантированно доступного хранилища Яндекса -->
-<script src="https://yastatic.net"></script>
-
 <script>
-    window.onload = function() {
-        const csvUrl = "https://google.com";
+    // Встроенный ручной разбор CSV без сторонних библиотек
+    function parseCSV(text) {
+        let lines = text.split(/\r?\n/);
+        return lines.map(line => {
+            let result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                let char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }).filter(row => row.length > 0 && row.some(cell => cell !== ""));
+    }
 
+    window.onload = async function() {
+        const csvUrl = "https://google.com";
         const loadingText = document.getElementById('loading-status');
         const table = document.getElementById('data-table');
 
-        if (typeof Papa === 'undefined') {
-            loadingText.innerText = "Ошибка: не удалось загрузить парсер. Попробуйте отключить VPN или сменить сеть.";
-            return;
-        }
-        
-        Papa.parse(csvUrl, {
-            download: true,
-            skipEmptyLines: 'greedy',
-            complete: function(results) {
-                const rows = results.data;
-                if (!rows || rows.length < 2) {
-                    loadingText.innerText = "Таблица пуста или к ней заблокирован доступ в Google.";
-                    return;
-                }
-                
-                // Извлекаем заголовки со второй строчки (так как первая у вас объединена)
-                const headers = rows[1];
-                const headHtml = '<tr>' + headers.map(h => `<th>${h || ''}</th>`).join('') + '</tr>';
-                document.getElementById('table-head').innerHTML = headHtml;
-
-                // Извлекаем фильмы начиная со 3-й строчки
-                const dataRows = rows.slice(2);
-                const bodyHtml = dataRows.map(row => {
-                    return `<tr class="data-row">${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
-                }).join('');
-                
-                document.getElementById('table-body').innerHTML = bodyHtml;
-                
-                // Показываем готовую таблицу
-                loadingText.style.display = 'none';
-                table.style.display = 'table';
-
-                // Моментальный встроенный поиск
-                document.getElementById('search-input').addEventListener('input', function() {
-                    const query = this.value.toLowerCase();
-                    const tableRows = document.querySelectorAll('.data-row');
-                    
-                    tableRows.forEach(row => {
-                        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
-                    });
-                });
-            },
-            error: function(err) {
-                loadingText.innerText = "Google заблокировал запрос. Проверьте статус общего доступа таблицы.";
-                console.error(error);
+        try {
+            const response = await fetch(csvUrl);
+            if (!response.ok) throw new Error('Ошибка загрузки файла');
+            const text = await response.text();
+            
+            const rows = parseCSV(text);
+            if (rows.length < 2) {
+                loadingText.innerText = "Таблица пуста или данные некорректны.";
+                return;
             }
-        });
+
+            // Берем 2-ю строку как заголовки (Год, Название...)
+            const headers = rows[1];
+            document.getElementById('table-head').innerHTML = '<tr>' + headers.map(h => `<th>${h || ''}</th>`).join('') + '</tr>';
+
+            // Выводим данные с 3-й строки
+            const dataRows = rows.slice(2);
+            document.getElementById('table-body').innerHTML = dataRows.map(row => {
+                return `<tr class="data-row">${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
+            }).join('');
+
+            loadingText.style.display = 'none';
+            table.style.display = 'table';
+
+            // Живой поиск
+            document.getElementById('search-input').addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.data-row').forEach(row => {
+                    row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+                });
+            });
+
+        } catch (err) {
+            loadingText.innerText = "Не удалось подключиться к Google Таблице. Проверьте сеть.";
+            console.error(err);
+        }
     };
 </script>
 </body>
