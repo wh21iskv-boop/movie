@@ -2,52 +2,47 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интерактивная таблица данных</title>
-    <!-- Подключаем стили для красивой таблицы -->
+    <title>Каталог медиафайлов</title>
     <link href="https://unpkg.com" rel="stylesheet" />
     <style>
-        body { font-family: sans-serif; margin: 40px; background-color: #f8f9fa; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
+        body { font-family: sans-serif; margin: 20px; background-color: #f3f4f6; }
+        .container { max-width: 100%; background: white; padding: 20px; border-radius: 8px; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h1>Мои интерактивные данные</h1>
-    <!-- Сюда встроится таблица -->
+    <h2>Интерактивный каталог (Данные обновляются из Google)</h2>
     <div id="table-container"></div>
 </div>
 
-<!-- Подключаем логику таблицы -->
+<script src="https://cloudflare.com"></script>
 <script src="https://unpkg.com"></script>
 <script>
-    // Функция для автоматического чтения CSV и превращения его в массив
-    async function loadTable() {
-        const response = await fetch('data.csv');
-        const dataText = await response.text();
+    async function init() {
+        // Мы берем ту самую прямую ссылку на экспорт, которую вы успешно собрали в самом начале
+        // Вставьте её целиком внутрь кавычек ниже:
+        const gsheetUrl = "https://docs.google.com/spreadsheets/d/11eaKYcUOU6R7xIUMQ8fXZXY_RgA4GDKrJnTGJ5nMhXo/export?format=csv";
+
+        const res = await fetch(gsheetUrl);
+        const text = await res.text();
         
-        // Разделяем строки и ячейки
-        const rows = dataText.trim().split('\n').map(row => row.split(','));
-        const headers = rows[0]; // Первая строка — заголовки
-        const dataBody = rows.slice(1); // Остальные строки — данные
-
-        // Инициализируем интерактивную таблицу
-        new gridjs.Grid({
-            columns: headers,
-            data: dataBody,
-            search: true, // Включает поиск по всей таблице
-            sort: true,   // Включает сортировку при клике на заголовок
-            pagination: { limit: 10 }, // Разбивка на страницы по 10 строк
-            language: {
-                'search': { 'placeholder': 'Поиск...' },
-                'pagination': { 'previous': 'Назад', 'next': 'Вперед', 'showing': 'Показано', 'to': 'из', 'of': 'всего', 'results': 'записей' }
+        Papa.parse(text, {
+            header: false,
+            skipEmptyLines: true,
+            complete: function(results) {
+                const rows = results.data;
+                new gridjs.Grid({
+                    columns: rows[0],
+                    data: rows.slice(1),
+                    search: true,
+                    sort: true,
+                    pagination: { limit: 25 },
+                    language: { 'search': { 'placeholder': 'Поиск...' } }
+                }).render(document.getElementById("table-container"));
             }
-        }).render(document.getElementById("table-container"));
+        });
     }
-
-    loadTable();
+    init();
 </script>
 </body>
 </html>
