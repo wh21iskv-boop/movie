@@ -3,93 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Каталог медиафайлов</title>
+    <title>Каталог фильмов</title>
+    <link href="https://jsdelivr.net" rel="stylesheet" />
     <style>
-        body { font-family: system-ui, sans-serif; margin: 20px; background-color: #f3f4f6; color: #1f2937; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f3f4f6; }
         .container { max-width: 100%; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .search-box { width: 100%; max-width: 400px; padding: 10px; margin-bottom: 20px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; }
-        .table-wrapper { overflow-x: auto; max-height: 700px; border: 1px solid #e5e7eb; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: white; }
-        th { background-color: #f9fafb; padding: 12px 16px; font-weight: 600; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 5; }
-        td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        tr:hover td { background-color: #f9fafb; white-space: normal; overflow: visible; word-break: break-word; }
-        .loading { padding: 20px; font-size: 18px; color: #6b7280; text-align: center; }
+        h2 { color: #1f2937; margin-bottom: 20px; font-size: 22px; }
+        .gridjs-td { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .gridjs-td:hover { white-space: normal; overflow: visible; background: #fff; position: relative; z-index: 99; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Интерактивный каталог (Прямое обновление из Google)</h2>
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск по всему каталогу...">
-    
-    <div class="table-wrapper">
-        <div id="loading-status" class="loading">Загрузка данных из Google Таблиц...</div>
-        <table id="data-table" style="display: none;">
-            <thead id="table-head"></thead>
-            <tbody id="table-body"></tbody>
-        </table>
-    </div>
+    <h2>Каталог медиафайлов (Автообновление из Google Таблиц)</h2>
+    <div id="table-container">Загрузка каталога, пожалуйста подождите...</div>
 </div>
 
+<script src="https://jsdelivr.net"></script>
+<script src="https://jsdelivr.net"></script>
+
 <script>
-    const csvUrl = "https://docs.google.com/spreadsheets/d/11eaKYcUOU6R7xIUMQ8fXZXY_RgA4GDKrJnTGJ5nMhXo/export?format=csv";
+    window.onload = function() {
+        const gsheetUrl = "https://google.com";
 
-    async function loadCatalog() {
-        const loadingText = document.getElementById('loading-status');
-        const table = document.getElementById('data-table');
-        
-        try {
-            const response = await fetch(csvUrl);
-            if (!response.ok) throw new Error('Ошибка сети при загрузке таблицы');
-            
-            const text = await response.text();
-            
-            // Простейший, но надежный разбор CSV строк с учетом кавычек
-            const rows = text.split('\n').map(row => {
-                const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || row.split(',');
-                return matches.map(cell => cell.replace(/^"|"$/g, '').trim());
-            }).filter(row => row.length > 0 && row.some(cell => cell !== ""));
+        Papa.parse(gsheetUrl, {
+            download: true,
+            skipEmptyLines: 'greedy',
+            complete: function(results) {
+                const rows = results.data;
+                if (!rows || rows.length < 2) {
+                    document.getElementById("table-container").innerText = "Таблица пуста или к ней нет доступа.";
+                    return;
+                }
 
-            if (rows.length === 0) {
-                loadingText.innerText = "Таблица пуста или содержит неверный формат.";
-                return;
+                document.getElementById("table-container").innerHTML = "";
+
+                new gridjs.Grid({
+                    columns: rows[1], // Берем ВТОРУЮ строку таблицы как заголовки (Год, Название и т.д.)
+                    data: rows.slice(2), // Данные начинаются с третьей строки
+                    search: true,
+                    sort: true,
+                    resizable: true,
+                    pagination: { limit: 25 },
+                    language: {
+                        'search': { 'placeholder': 'Поиск фильма или актера...' },
+                        'pagination': { 'previous': '◀', 'next': '▶', 'showing': 'Показано', 'to': 'из', 'of': 'всего', 'results': 'фильмов' }
+                    }
+                }).render(document.getElementById("table-container"));
+            },
+            error: function(err) {
+                document.getElementById("table-container").innerText = "Ошибка загрузки данных из Google.";
+                console.error(err);
             }
-
-            // Рендерим заголовки
-            const headers = rows[0];
-            const headHtml = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
-            document.getElementById('table-head').innerHTML = headHtml;
-
-            // Рендерим строки данных
-            const dataRows = rows.slice(1);
-            const bodyHtml = dataRows.map((row, index) => {
-                return `<tr class="data-row">${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
-            }).join('');
-            
-            document.getElementById('table-body').innerHTML = bodyHtml;
-            
-            // Скрываем статус загрузки и показываем готовую таблицу
-            loadingText.style.display = 'none';
-            table.style.display = 'table';
-
-            // Настраиваем живой поиск без сторонних библиотек
-            document.getElementById('search-input').addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                const tableRows = document.querySelectorAll('.data-row');
-                
-                tableRows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(query) ? '' : 'none';
-                });
-            });
-
-        } catch (error) {
-            console.error(error);
-            loadingText.innerText = "Не удалось загрузить данные. Проверьте, что в настройках Google Таблицы открыт доступ 'Для всех, у кого есть ссылка'.";
-        }
-    }
-
-    window.addEventListener('DOMContentLoaded', loadCatalog);
+        });
+    };
 </script>
 </body>
 </html>
