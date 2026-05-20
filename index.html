@@ -11,11 +11,70 @@
             box-sizing: border-box;
         }
         
+        /* ===== ПЕРЕМЕННЫЕ ДЛЯ ТЕМ ===== */
+        :root {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --card-bg: rgba(255,255,255,0.08);
+            --card-bg-hover: rgba(255,255,255,0.12);
+            --text-primary: #eee;
+            --text-secondary: #b0b0b0;
+            --text-muted: #8899aa;
+            --border-color: #2d3561;
+            --accent: #667eea;
+            --accent-hover: #764ba2;
+            --modal-bg: linear-gradient(135deg, #1e1e3a 0%, #1a1a2e 100%);
+            --input-bg: rgba(255,255,255,0.1);
+            --input-focus: rgba(255,255,255,0.15);
+        }
+        
+        body.light {
+            --bg-gradient-start: #f5f5f7;
+            --bg-gradient-end: #e8e8ec;
+            --card-bg: rgba(0,0,0,0.05);
+            --card-bg-hover: rgba(0,0,0,0.08);
+            --text-primary: #1a1a2e;
+            --text-secondary: #444;
+            --text-muted: #666;
+            --border-color: #ddd;
+            --accent: #5a67d8;
+            --accent-hover: #6b46c1;
+            --modal-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f5 100%);
+            --input-bg: rgba(0,0,0,0.05);
+            --input-focus: rgba(0,0,0,0.1);
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             min-height: 100vh;
-            color: #eee;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        /* Кнопка переключения темы */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: all 0.3s;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--accent);
         }
         
         .container {
@@ -24,12 +83,11 @@
             padding: 20px;
         }
         
-        /* Анимированный заголовок */
         h1 {
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -37,52 +95,83 @@
         }
         
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Улучшенный поиск */
+        /* Верхняя панель с сортировкой и случайным фильмом */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .sort-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .sort-section label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .sort-select {
+            padding: 8px 15px;
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .random-btn {
+            padding: 8px 20px;
+            border-radius: 25px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .random-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
         .search-section {
-            margin-bottom: 30px;
-            animation: fadeInUp 0.6s ease;
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            margin-bottom: 20px;
         }
         
         #searchInput {
             width: 100%;
             padding: 15px 20px;
             font-size: 16px;
-            border: 2px solid #2d3561;
+            border: 2px solid var(--border-color);
             border-radius: 50px;
-            background: rgba(255,255,255,0.1);
-            color: white;
+            background: var(--input-bg);
+            color: var(--text-primary);
             outline: none;
             transition: all 0.3s;
         }
         
         #searchInput:focus {
-            border-color: #667eea;
-            background: rgba(255,255,255,0.15);
+            border-color: var(--accent);
+            background: var(--input-focus);
             box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
         }
         
-        /* Фильтры */
         .filters {
             display: flex;
             gap: 15px;
@@ -93,37 +182,30 @@
         select {
             padding: 10px 20px;
             border-radius: 25px;
-            border: 1px solid #2d3561;
-            background: rgba(255,255,255,0.1);
-            color: white;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
             cursor: pointer;
             min-width: 150px;
             transition: all 0.3s;
         }
         
         select:hover {
-            border-color: #667eea;
-            background: rgba(255,255,255,0.15);
+            border-color: var(--accent);
         }
         
-        select option {
-            background: #1a1a2e;
-        }
-        
-        /* Счетчик */
         .stats {
             text-align: right;
             margin-bottom: 20px;
-            color: rgba(255,255,255,0.7);
+            color: var(--text-secondary);
             font-size: 14px;
             padding: 8px 15px;
-            background: rgba(255,255,255,0.05);
+            background: var(--card-bg);
             border-radius: 20px;
             display: inline-block;
             float: right;
         }
         
-        /* Сетка фильмов */
         .movies-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -132,9 +214,13 @@
             animation: fadeInUp 0.6s ease;
         }
         
-        /* Карточка фильма с улучшенной анимацией */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .movie-card {
-            background: rgba(255,255,255,0.08);
+            background: var(--card-bg);
             border-radius: 15px;
             overflow: hidden;
             backdrop-filter: blur(10px);
@@ -143,25 +229,27 @@
             position: relative;
         }
         
-        .movie-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
-        }
-        
-        .movie-card:hover::before {
-            left: 100%;
-        }
-        
         .movie-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            background: rgba(255,255,255,0.12);
+            background: var(--card-bg-hover);
+        }
+        
+        .movie-poster {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--bg-gradient-start);
+        }
+        
+        .movie-poster-placeholder {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--border-color) 0%, var(--bg-gradient-start) 100%);
+            font-size: 48px;
         }
         
         .movie-info {
@@ -172,34 +260,33 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 5px;
-            color: white;
+            color: var(--text-primary);
         }
         
         .movie-title-original {
             font-size: 13px;
-            color: #8899aa;
+            color: var(--text-muted);
             margin-bottom: 10px;
             font-style: italic;
         }
         
         .movie-detail {
             font-size: 12px;
-            color: #b0b0b0;
+            color: var(--text-secondary);
             line-height: 1.4;
             margin-top: 5px;
         }
         
         .movie-label {
-            color: #667eea;
+            color: var(--accent);
             font-weight: bold;
         }
         
-        /* Загрузка */
-        .loading {
+        .loading, .no-results {
             text-align: center;
             padding: 60px;
             font-size: 18px;
-            color: rgba(255,255,255,0.7);
+            color: var(--text-secondary);
         }
         
         .error {
@@ -209,20 +296,6 @@
             border-radius: 15px;
             margin: 20px;
             color: #ff6b6b;
-            animation: shake 0.5s ease;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 60px;
-            font-size: 18px;
-            color: rgba(255,255,255,0.5);
         }
         
         @keyframes spin {
@@ -232,14 +305,14 @@
         .spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid rgba(255,255,255,0.2);
-            border-top-color: #667eea;
+            border: 3px solid rgba(102,126,234,0.2);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 15px;
         }
         
-        /* Модальное окно - улучшенное */
+        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -251,43 +324,25 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
         
         .modal-content {
-            background: linear-gradient(135deg, #1e1e3a 0%, #1a1a2e 100%);
+            background: var(--modal-bg);
             border-radius: 20px;
             max-width: 700px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
             padding: 25px;
-            border: 1px solid rgba(102, 126, 234, 0.3);
+            border: 1px solid var(--accent);
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-            animation: slideInUp 0.3s ease;
-        }
-        
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
         
         .close-modal {
             float: right;
             cursor: pointer;
             font-size: 28px;
-            color: #667eea;
+            color: var(--accent);
             font-weight: bold;
             transition: all 0.3s;
         }
@@ -299,33 +354,23 @@
         
         .modal h3 {
             margin-bottom: 15px;
-            color: #667eea;
+            color: var(--accent);
             font-size: 24px;
-            border-left: 3px solid #667eea;
+            border-left: 3px solid var(--accent);
             padding-left: 15px;
         }
         
         .modal-detail {
             margin: 10px 0;
             padding: 8px;
-            border-bottom: 1px solid #2d3561;
-            transition: background 0.2s;
-        }
-        
-        .modal-detail:hover {
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
-        }
-        
-        .modal-detail:last-child {
-            border-bottom: none;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .modal-link {
             display: inline-block;
             margin-top: 10px;
             margin-right: 15px;
-            color: #667eea;
+            color: var(--accent);
             text-decoration: none;
             padding: 5px 10px;
             border-radius: 20px;
@@ -333,95 +378,75 @@
         }
         
         .modal-link:hover {
-            background: rgba(102, 126, 234, 0.2);
-            text-decoration: none;
-            transform: translateY(-2px);
+            background: rgba(102,126,234,0.2);
         }
         
-        /* Аудио дорожки */
         .audio-line {
             display: block;
             padding: 5px 0 5px 20px;
             font-size: 12px;
-            color: #b0b0b0;
-            border-left: 2px solid #667eea;
+            color: var(--text-secondary);
+            border-left: 2px solid var(--accent);
             margin: 5px 0;
-            transition: all 0.2s;
         }
         
-        .audio-line:hover {
-            border-left-color: #ff6b6b;
-            padding-left: 25px;
-        }
-        
-        /* Субтитры - КАЖДЫЙ С НОВОЙ СТРОКИ */
         .subtitle-line {
             display: block;
             padding: 4px 0 4px 20px;
             font-size: 12px;
-            color: #b0b0b0;
-            border-left: 1px dashed #667eea;
+            color: var(--text-secondary);
+            border-left: 1px dashed var(--accent);
             margin: 4px 0;
         }
         
-        /* Счетчик результатов */
-        .result-badge {
-            background: rgba(102, 126, 234, 0.3);
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-        }
-        
-        /* Скроллбар */
         ::-webkit-scrollbar {
             width: 8px;
         }
         
         ::-webkit-scrollbar-track {
-            background: #1a1a2e;
+            background: var(--bg-gradient-start);
             border-radius: 10px;
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #667eea;
+            background: var(--accent);
             border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #764ba2;
         }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+    
     <div class="container">
         <h1>🎬 Каталог медиафайлов</h1>
+        
+        <div class="top-bar">
+            <div class="sort-section">
+                <label>📊 Сортировать:</label>
+                <select id="sortSelect" class="sort-select">
+                    <option value="default">По умолчанию</option>
+                    <option value="year_asc">📅 Год (старые → новые)</option>
+                    <option value="year_desc">📅 Год (новые → старые)</option>
+                    <option value="rating_desc">⭐ Рейтинг (сначала высокие)</option>
+                    <option value="title_asc">🔤 Название (А → Я)</option>
+                    <option value="title_desc">🔤 Название (Я → А)</option>
+                </select>
+            </div>
+            <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
+        </div>
         
         <div class="search-section">
             <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, жанру, актерам, режиссеру...">
             <div class="filters">
-                <select id="genreFilter">
-                    <option value="">🎭 Все жанры</option>
-                </select>
-                <select id="yearFilter">
-                    <option value="">📅 Все годы</option>
-                </select>
-                <select id="countryFilter">
-                    <option value="">🌍 Все страны</option>
-                </select>
-                <select id="actorFilter">
-                    <option value="">⭐ Все актеры</option>
-                </select>
+                <select id="genreFilter"><option value="">🎭 Все жанры</option></select>
+                <select id="yearFilter"><option value="">📅 Все годы</option></select>
+                <select id="countryFilter"><option value="">🌍 Все страны</option></select>
+                <select id="actorFilter"><option value="">⭐ Все актеры</option></select>
             </div>
         </div>
         
         <div class="stats" id="stats"></div>
-        
-        <div id="content">
-            <div class="loading">
-                <div class="spinner"></div>
-                Загрузка каталога...
-            </div>
-        </div>
+        <div id="content"><div class="loading"><div class="spinner"></div>Загрузка каталога...</div></div>
     </div>
     
     <div id="modal" class="modal">
@@ -435,17 +460,30 @@
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv';
         
         let allMovies = [];
+        let filteredMovies = [];
         let uniqueGenres = new Set();
         let uniqueYears = new Set();
         let uniqueCountries = new Set();
         let uniqueActors = new Set();
+        let currentSort = 'default';
+        
+        // ===== ТЕМНАЯ/СВЕТЛАЯ ТЕМА =====
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.add('light');
+            themeToggle.textContent = '☀️';
+        }
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            const isLight = document.body.classList.contains('light');
+            themeToggle.textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
         
         window.showMovieDetails = function(index) {
             const movie = allMovies[index];
-            if (!movie) {
-                console.error('Фильм не найден, индекс:', index);
-                return;
-            }
+            if (!movie) return;
             
             const modal = document.getElementById('modal');
             const modalBody = document.getElementById('modalBody');
@@ -463,7 +501,6 @@
             if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
             
             let detailsHtml = `<h3>${escapeHtml(movie.russianTitle)}</h3>`;
-            
             if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
                 detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
             }
@@ -472,178 +509,195 @@
             if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
             if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
             if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
-            if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> <span class="result-badge">${escapeHtml(rating)}</span></div>`;
+            if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
             if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
-            
             if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
             if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
             if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
             
-            // Аудио дорожки
             if (movie.audioInfo && movie.audioInfo.length > 0) {
                 let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
                 for (const audio of movie.audioInfo) {
-                    if (audio && audio !== '—') {
-                        audioHtml += `<span class="audio-line">${escapeHtml(audio)}</span>`;
-                    }
+                    if (audio && audio !== '—') audioHtml += `<span class="audio-line">${escapeHtml(audio)}</span>`;
                 }
                 audioHtml += '</div>';
                 detailsHtml += audioHtml;
             }
             
-            // Субтитры - КАЖДЫЙ С НОВОЙ СТРОКИ (исправлено!)
             if (movie.subtitles && movie.subtitles.length > 0) {
                 let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
                 for (const sub of movie.subtitles) {
-                    if (sub && sub !== '—') {
-                        subsHtml += `<span class="subtitle-line">📄 ${escapeHtml(sub)}</span>`;
-                    }
+                    if (sub && sub !== '—') subsHtml += `<span class="subtitle-line">📄 ${escapeHtml(sub)}</span>`;
                 }
                 subsHtml += '</div>';
                 detailsHtml += subsHtml;
             }
             
-            if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> <code style="font-size:11px">${escapeHtml(movie.fileName)}</code></div>`;
+            if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
             if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
             
             modalBody.innerHTML = detailsHtml;
             modal.style.display = 'flex';
         };
         
+        // ===== СЛУЧАЙНЫЙ ФИЛЬМ =====
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            if (filteredMovies.length === 0) return;
+            const randomIndex = Math.floor(Math.random() * filteredMovies.length);
+            const randomMovie = filteredMovies[randomIndex];
+            const originalIndex = allMovies.findIndex(m => m.id === randomMovie.id);
+            if (originalIndex !== -1) showMovieDetails(originalIndex);
+        });
+        
+        // ===== СОРТИРОВКА =====
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            applyFilterAndSort();
+        });
+        
+        function sortMovies(movies) {
+            const sorted = [...movies];
+            switch(currentSort) {
+                case 'year_asc':
+                    sorted.sort((a, b) => (parseInt(extractYear(a.year)) || 0) - (parseInt(extractYear(b.year)) || 0));
+                    break;
+                case 'year_desc':
+                    sorted.sort((a, b) => (parseInt(extractYear(b.year)) || 0) - (parseInt(extractYear(a.year)) || 0));
+                    break;
+                case 'rating_desc':
+                    sorted.sort((a, b) => {
+                        const ratingA = parseFloat(a.ratingKP || a.ratingIMDb || 0);
+                        const ratingB = parseFloat(b.ratingKP || b.ratingIMDb || 0);
+                        return ratingB - ratingA;
+                    });
+                    break;
+                case 'title_asc':
+                    sorted.sort((a, b) => a.russianTitle.localeCompare(b.russianTitle));
+                    break;
+                case 'title_desc':
+                    sorted.sort((a, b) => b.russianTitle.localeCompare(a.russianTitle));
+                    break;
+                default: return movies;
+            }
+            return sorted;
+        }
+        
         async function loadMovies() {
-            const contentDiv = document.getElementById('content');
-            
             try {
-                console.log('Загрузка данных...');
-                
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
                 const csvText = await response.text();
-                console.log('Получено символов:', csvText.length);
-                
                 const rows = parseCSV(csvText);
-                console.log('Всего строк в CSV:', rows.length);
-                
                 if (rows.length < 2) throw new Error('Нет данных');
                 
                 const headers = rows[0];
-                console.log('Заголовки:', headers);
-                
                 function findCol(names) {
                     for (let i = 0; i < headers.length; i++) {
-                        const h = headers[i] || '';
                         for (const name of names) {
-                            if (h.toLowerCase().includes(name.toLowerCase())) {
-                                return i;
-                            }
+                            if (headers[i] && headers[i].toLowerCase().includes(name.toLowerCase())) return i;
                         }
                     }
                     return -1;
                 }
                 
-                const yearIndex = findCol(['Год выпуска', 'Год']);
-                const originalTitleIndex = findCol(['Оригинальное название', 'Оригинал']);
-                const russianTitleIndex = findCol(['Русское название', 'Название русское']);
-                const genreIndex = findCol(['Жанр']);
-                const descriptionIndex = findCol(['Описание']);
-                const kinopoiskLinkIndex = findCol(['Киноопись', 'ссылка']);
-                const ratingKPIndex = findCol(['Оценка Киноискусства', 'Киноискусства']);
-                const ratingIMDbIndex = findCol(['Оценка ИМДБ', 'IMDb', 'ИМДБ']);
-                const actorsIndex = findCol(['Актерский фестиваль', 'Актеры']);
-                const countryIndex = findCol(['Страна']);
-                const directorIndex = findCol(['Режиссёр', 'Режиссер']);
-                const fileNameIndex = findCol(['Имя файла', 'Файл']);
-                const durationIndex = findCol(['Длительность']);
-                const sizeIndex = findCol(['Размер']);
-                const resolutionIndex = findCol(['Разрешение']);
-                const audioIndex = findCol(['Аудио информация', 'Аудио']);
-                const subtitlesIndex = findCol(['Субтитр', 'Субтитры']);
-                const yandexIndex = findCol(['Папка на Яндекс', 'Яндекс']);
+                const idx = {
+                    year: findCol(['Год выпуска', 'Год']),
+                    originalTitle: findCol(['Оригинальное название', 'Оригинал']),
+                    russianTitle: findCol(['Русское название', 'Название русское']),
+                    genre: findCol(['Жанр']),
+                    description: findCol(['Описание']),
+                    kinopoiskLink: findCol(['Киноопись', 'ссылка']),
+                    ratingKP: findCol(['Оценка Киноискусства', 'Киноискусства']),
+                    ratingIMDb: findCol(['Оценка ИМДБ', 'IMDb']),
+                    actors: findCol(['Актерский фестиваль', 'Актеры']),
+                    country: findCol(['Страна']),
+                    director: findCol(['Режиссёр', 'Режиссер']),
+                    fileName: findCol(['Имя файла', 'Файл']),
+                    duration: findCol(['Длительность']),
+                    size: findCol(['Размер']),
+                    resolution: findCol(['Разрешение']),
+                    audio: findCol(['Аудио информация', 'Аудио']),
+                    subtitles: findCol(['Субтитр', 'Субтитры']),
+                    yandex: findCol(['Папка на Яндекс', 'Яндекс']),
+                    poster: findCol(['Постер', 'Постер ссылка', 'Poster'])
+                };
                 
                 allMovies = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
                     if (!row || row.length === 0) continue;
                     
-                    const getVal = (idx) => {
-                        if (idx === -1 || idx >= row.length) return '';
-                        const val = row[idx];
-                        return (val && val !== 'null' && val !== 'undefined') ? String(val).trim() : '';
-                    };
+                    const getVal = (i) => (i !== -1 && i < row.length) ? (row[i] || '').trim() : '';
                     
-                    const russianTitle = getVal(russianTitleIndex);
-                    const originalTitle = getVal(originalTitleIndex);
+                    const russianTitle = getVal(idx.russianTitle);
+                    const originalTitle = getVal(idx.originalTitle);
                     
-                    let displayTitle = russianTitle;
+                    // ТЕПЕРЬ НЕ ПРОПУСКАЕМ СТРОКИ БЕЗ НАЗВАНИЯ - создаём заглушку
+                    let displayTitle = russianTitle || originalTitle;
                     let displayOriginal = originalTitle;
                     
-                    if (!displayTitle && displayOriginal) {
-                        displayTitle = displayOriginal;
+                    if (!displayTitle) {
+                        displayTitle = `Фильм #${i}`;
                         displayOriginal = '';
                     }
                     
-                    if (!displayTitle) continue;
-                    if (displayTitle === '—' || displayTitle === '-') continue;
-                    if (displayTitle.includes('http')) continue;
+                    if (displayTitle === '—' || displayTitle === '-') {
+                        displayTitle = `Фильм #${i}`;
+                    }
                     
-                    let ratingKP = getVal(ratingKPIndex);
+                    // Очищаем рейтинг
+                    let ratingKP = getVal(idx.ratingKP);
                     if (ratingKP && (ratingKP.includes('kinopoisk') || ratingKP.includes('http'))) {
                         const match = ratingKP.match(/(\d+[,.]?\d*)/);
                         ratingKP = match ? match[1].replace(',', '.') : '';
                     }
-                    if (ratingKP === '—' || ratingKP === '-') ratingKP = '';
                     
-                    let ratingIMDb = getVal(ratingIMDbIndex);
+                    let ratingIMDb = getVal(idx.ratingIMDb);
                     if (ratingIMDb && ratingIMDb.includes('http')) {
                         const match = ratingIMDb.match(/(\d+[,.]?\d*)/);
                         ratingIMDb = match ? match[1].replace(',', '.') : '';
                     }
-                    if (ratingIMDb === '—' || ratingIMDb === '-') ratingIMDb = '';
                     
-                    let audioInfo = getVal(audioIndex);
+                    // Аудио и субтитры
+                    let audioStr = getVal(idx.audio);
                     let audioArray = [];
-                    if (audioInfo && audioInfo !== '—' && audioInfo !== '-') {
-                        if (audioInfo.includes('Аудио #')) {
-                            audioArray = audioInfo.split(/(?=Аудио #\d+)/);
-                        } else if (audioInfo.includes('\n')) {
-                            audioArray = audioInfo.split('\n');
-                        } else {
-                            audioArray = [audioInfo];
-                        }
+                    if (audioStr && audioStr !== '—') {
+                        audioArray = audioStr.includes('Аудио #') ? audioStr.split(/(?=Аудио #\d+)/) : [audioStr];
                         audioArray = audioArray.map(a => a.trim()).filter(a => a && a !== '—');
                     }
                     
-                    let subtitles = getVal(subtitlesIndex);
-                    let subtitlesArray = [];
-                    if (subtitles && subtitles !== '—' && subtitles !== '-') {
-                        subtitlesArray = subtitles.split(/[,;]/).map(s => s.trim()).filter(s => s && s !== '—');
+                    let subStr = getVal(idx.subtitles);
+                    let subArray = [];
+                    if (subStr && subStr !== '—') {
+                        subArray = subStr.split(/[,;]/).map(s => s.trim()).filter(s => s && s !== '—');
                     }
                     
                     const movie = {
                         id: i,
                         russianTitle: displayTitle,
-                        originalTitle: displayOriginal,
-                        year: getVal(yearIndex),
-                        genre: getVal(genreIndex),
-                        description: getVal(descriptionIndex),
-                        kinopoiskLink: getVal(kinopoiskLinkIndex),
+                        originalTitle: displayOriginal !== displayTitle ? displayOriginal : '',
+                        year: getVal(idx.year),
+                        genre: getVal(idx.genre),
+                        description: getVal(idx.description),
+                        kinopoiskLink: getVal(idx.kinopoiskLink),
                         ratingKP: ratingKP,
                         ratingIMDb: ratingIMDb,
-                        actors: getVal(actorsIndex),
-                        country: getVal(countryIndex),
-                        director: getVal(directorIndex),
-                        fileName: getVal(fileNameIndex),
-                        duration: getVal(durationIndex),
-                        size: getVal(sizeIndex),
-                        resolution: getVal(resolutionIndex),
+                        actors: getVal(idx.actors),
+                        country: getVal(idx.country),
+                        director: getVal(idx.director),
+                        fileName: getVal(idx.fileName),
+                        duration: getVal(idx.duration),
+                        size: getVal(idx.size),
+                        resolution: getVal(idx.resolution),
                         audioInfo: audioArray,
-                        subtitles: subtitlesArray,
-                        yandexFolder: getVal(yandexIndex)
+                        subtitles: subArray,
+                        yandexFolder: getVal(idx.yandex),
+                        poster: getVal(idx.poster)
                     };
                     
                     allMovies.push(movie);
                     
+                    // Собираем уникальные значения для фильтров
                     if (movie.genre && movie.genre !== '—') {
                         movie.genre.split(/[,;\/]/).forEach(g => {
                             const genre = g.trim();
@@ -656,43 +710,23 @@
                         if (yearMatch) uniqueYears.add(yearMatch[0]);
                     }
                     
-                    if (movie.country && movie.country !== '—' && movie.country !== '-') {
-                        uniqueCountries.add(movie.country);
-                    }
-                    
-                    if (movie.actors && movie.actors !== '—' && movie.actors !== '-') {
+                    if (movie.country && movie.country !== '—') uniqueCountries.add(movie.country);
+                    if (movie.actors && movie.actors !== '—') {
                         movie.actors.split(/[,;]/).forEach(actor => {
                             const a = actor.trim();
-                            if (a && a.length > 2 && a !== '—') uniqueActors.add(a);
+                            if (a && a.length > 2) uniqueActors.add(a);
                         });
                     }
                 }
                 
-                console.log('Загружено фильмов:', allMovies.length);
-                
-                if (allMovies.length === 0) {
-                    throw new Error('Не найдено фильмов. Проверьте данные в таблице.');
-                }
+                console.log(`Загружено фильмов: ${allMovies.length}`);
                 
                 function populateFilter(selectId, valuesSet, sortByNumber = false) {
                     const select = document.getElementById(selectId);
-                    if (!select) return;
                     let values = Array.from(valuesSet);
-                    if (sortByNumber) {
-                        values.sort((a, b) => {
-                            const numA = parseInt(a);
-                            const numB = parseInt(b);
-                            if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
-                            return a.localeCompare(b);
-                        });
-                    } else {
-                        values.sort();
-                    }
-                    values.forEach(value => {
-                        if (value && value !== '—' && value !== '-') {
-                            select.innerHTML += `<option value="${escapeHtml(value)}">${escapeHtml(value.length > 50 ? value.substring(0, 50) + '...' : value)}</option>`;
-                        }
-                    });
+                    if (sortByNumber) values.sort((a,b) => parseInt(b) - parseInt(a));
+                    else values.sort();
+                    values.forEach(v => { if(v && v!=='—') select.innerHTML += `<option value="${escapeHtml(v)}">${escapeHtml(v.length>50? v.substring(0,50)+'...':v)}</option>`; });
                 }
                 
                 document.getElementById('genreFilter').innerHTML = '<option value="">🎭 Все жанры</option>';
@@ -705,70 +739,42 @@
                 populateFilter('countryFilter', uniqueCountries);
                 populateFilter('actorFilter', uniqueActors);
                 
-                displayMovies(allMovies);
+                applyFilterAndSort();
                 
             } catch (error) {
-                console.error('Ошибка:', error);
-                document.getElementById('content').innerHTML = `
-                    <div class="error">
-                        ❌ Ошибка: ${escapeHtml(error.message)}<br><br>
-                        Проверьте консоль (F12) для деталей
-                    </div>
-                `;
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${escapeHtml(error.message)}</div>`;
             }
         }
         
         function parseCSV(csvText) {
             const rows = [];
-            let currentRow = [];
-            let currentField = '';
-            let inQuotes = false;
-            
+            let currentRow = [], currentField = '', inQuotes = false;
             for (let i = 0; i < csvText.length; i++) {
-                const char = csvText[i];
-                const nextChar = csvText[i + 1];
-                
+                const char = csvText[i], next = csvText[i+1];
                 if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        currentField += '"';
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes;
-                    }
+                    if (inQuotes && next === '"') { currentField += '"'; i++; }
+                    else inQuotes = !inQuotes;
                 } else if (char === ',' && !inQuotes) {
                     currentRow.push(currentField);
                     currentField = '';
-                } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+                } else if ((char === '\n' || (char === '\r' && next === '\n')) && !inQuotes) {
                     if (char === '\r') i++;
                     currentRow.push(currentField);
-                    if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
-                        rows.push(currentRow);
-                    }
+                    if (currentRow.length > 0) rows.push(currentRow);
                     currentRow = [];
                     currentField = '';
-                } else {
-                    currentField += char;
-                }
+                } else currentField += char;
             }
-            
             if (currentField || currentRow.length > 0) {
                 currentRow.push(currentField);
-                if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
-                    rows.push(currentRow);
-                }
+                if (currentRow.length > 0) rows.push(currentRow);
             }
-            
             return rows;
         }
         
         function escapeHtml(text) {
             if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
         
         function extractYear(dateStr) {
@@ -783,57 +789,15 @@
             return '—';
         }
         
-        function displayMovies(movies) {
-            const contentDiv = document.getElementById('content');
-            const statsDiv = document.getElementById('stats');
-            
-            statsDiv.innerHTML = `📊 Найдено: ${movies.length} фильмов`;
-            
-            if (movies.length === 0) {
-                contentDiv.innerHTML = '<div class="no-results">😔 Ничего не найдено</div>';
-                return;
-            }
-            
-            let cardsHtml = '<div class="movies-grid">';
-            for (let i = 0; i < movies.length; i++) {
-                const movie = movies[i];
-                const originalIndex = allMovies.findIndex(m => m.id === movie.id);
-                
-                cardsHtml += `
-                    <div class="movie-card" onclick="showMovieDetails(${originalIndex})">
-                        <div class="movie-info">
-                            <div class="movie-title">🎬 ${escapeHtml(movie.russianTitle.length > 60 ? movie.russianTitle.substring(0, 60) + '...' : movie.russianTitle)}</div>
-                            ${movie.originalTitle && movie.originalTitle !== movie.russianTitle ? `<div class="movie-title-original">${escapeHtml(movie.originalTitle.length > 50 ? movie.originalTitle.substring(0, 50) + '...' : movie.originalTitle)}</div>` : ''}
-                            <div class="movie-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year) || '—')}</div>
-                            <div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre ? (movie.genre.length > 50 ? movie.genre.substring(0, 50) + '...' : movie.genre) : '—')}</div>
-                            <div class="movie-detail"><span class="movie-label">⭐ Рейтинг:</span> ${escapeHtml(getRating(movie))}</div>
-                            <div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director ? (movie.director.length > 40 ? movie.director.substring(0, 40) + '...' : movie.director) : '—')}</div>
-                        </div>
-                    </div>
-                `;
-            }
-            cardsHtml += '</div>';
-            contentDiv.innerHTML = cardsHtml;
-        }
-        
-        function filterMovies() {
+        function applyFilterAndSort() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedGenre = document.getElementById('genreFilter').value;
             const selectedYear = document.getElementById('yearFilter').value;
             const selectedCountry = document.getElementById('countryFilter').value;
             const selectedActor = document.getElementById('actorFilter').value;
             
-            const filtered = allMovies.filter(movie => {
-                const searchFields = [
-                    movie.russianTitle,
-                    movie.originalTitle,
-                    movie.genre,
-                    movie.actors,
-                    movie.director,
-                    movie.description,
-                    movie.country
-                ].join(' ').toLowerCase();
-                
+            let filtered = allMovies.filter(movie => {
+                const searchFields = [movie.russianTitle, movie.originalTitle, movie.genre, movie.actors, movie.director, movie.description, movie.country].join(' ').toLowerCase();
                 const matchesSearch = !searchTerm || searchFields.includes(searchTerm);
                 
                 let matchesGenre = !selectedGenre;
@@ -844,7 +808,6 @@
                 
                 const movieYear = extractYear(movie.year);
                 const matchesYear = !selectedYear || movieYear === selectedYear;
-                
                 const matchesCountry = !selectedCountry || (movie.country || '').includes(selectedCountry);
                 
                 let matchesActor = !selectedActor;
@@ -852,28 +815,61 @@
                     const movieActors = (movie.actors || '').split(/[,;]/).map(a => a.trim());
                     matchesActor = movieActors.some(actor => actor.includes(selectedActor));
                 }
-                
                 return matchesSearch && matchesGenre && matchesYear && matchesCountry && matchesActor;
             });
             
+            filtered = sortMovies(filtered);
+            filteredMovies = filtered;
             displayMovies(filtered);
+        }
+        
+        function displayMovies(movies) {
+            const contentDiv = document.getElementById('content');
+            document.getElementById('stats').innerHTML = `📊 Найдено: ${movies.length} из ${allMovies.length} фильмов`;
+            
+            if (movies.length === 0) {
+                contentDiv.innerHTML = '<div class="no-results">😔 Ничего не найдено</div>';
+                return;
+            }
+            
+            let cardsHtml = '<div class="movies-grid">';
+            for (const movie of movies) {
+                const originalIndex = allMovies.findIndex(m => m.id === movie.id);
+                const posterHtml = movie.poster && movie.poster.startsWith('http') 
+                    ? `<img class="movie-poster" src="${escapeHtml(movie.poster)}" alt="${escapeHtml(movie.russianTitle)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
+                    : `<div class="movie-poster-placeholder">🎬</div>`;
+                
+                cardsHtml += `
+                    <div class="movie-card" onclick="showMovieDetails(${originalIndex})">
+                        ${posterHtml}
+                        <div class="movie-info">
+                            <div class="movie-title">${escapeHtml(movie.russianTitle.length > 60 ? movie.russianTitle.substring(0,60)+'...' : movie.russianTitle)}</div>
+                            ${movie.originalTitle ? `<div class="movie-title-original">${escapeHtml(movie.originalTitle.length > 50 ? movie.originalTitle.substring(0,50)+'...' : movie.originalTitle)}</div>` : ''}
+                            <div class="movie-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year) || '—')}</div>
+                            <div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre ? (movie.genre.length > 50 ? movie.genre.substring(0,50)+'...' : movie.genre) : '—')}</div>
+                            <div class="movie-detail"><span class="movie-label">⭐ Рейтинг:</span> ${escapeHtml(getRating(movie))}</div>
+                            <div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director ? (movie.director.length > 40 ? movie.director.substring(0,40)+'...' : movie.director) : '—')}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            cardsHtml += '</div>';
+            contentDiv.innerHTML = cardsHtml;
         }
         
         let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(filterMovies, 300);
+            searchTimeout = setTimeout(applyFilterAndSort, 300);
         });
-        document.getElementById('genreFilter').addEventListener('change', filterMovies);
-        document.getElementById('yearFilter').addEventListener('change', filterMovies);
-        document.getElementById('countryFilter').addEventListener('change', filterMovies);
-        document.getElementById('actorFilter').addEventListener('change', filterMovies);
+        document.getElementById('genreFilter').addEventListener('change', applyFilterAndSort);
+        document.getElementById('yearFilter').addEventListener('change', applyFilterAndSort);
+        document.getElementById('countryFilter').addEventListener('change', applyFilterAndSort);
+        document.getElementById('actorFilter').addEventListener('change', applyFilterAndSort);
         
         const modal = document.getElementById('modal');
         document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
-        window.onclick = (event) => {
-            if (event.target === modal) modal.style.display = 'none';
-        };
+        window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
         
         loadMovies();
     </script>
