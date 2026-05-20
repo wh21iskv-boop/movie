@@ -1,0 +1,37 @@
+name: Ежедневное обновление кеша постеров
+
+on:
+  schedule:
+    # Запуск каждый день в 03:00 по UTC (06:00 МСК)
+    - cron: '0 3 * * *'
+  # Возможность запустить вручную из интерфейса GitHub
+  workflow_dispatch:
+
+jobs:
+  update-posters:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Клонируем репозиторий
+      uses: actions/checkout@v4
+      
+    - name: Устанавливаем Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Устанавливаем зависимости
+      run: npm install node-fetch
+      
+    - name: Запускаем скрипт обновления кеша
+      env:
+        KINOPOISK_API_KEY: ${{ secrets.KINOPOISK_API_KEY }}
+      run: node update_cache.js
+      
+    - name: Сохраняем изменения в репозитории
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "actions@github.com"
+        git add posters.json
+        git commit -m "🤖 Автоматическое обновление кеша постеров" || echo "Нет изменений для сохранения"
+        git push
