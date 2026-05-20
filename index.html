@@ -481,70 +481,95 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
         
-window.showMovieDetails = function(index) {
-    const movie = allMovies[index];
-    if (!movie) return;
-    
-    const modal = document.getElementById('modal');
-    const modalBody = document.getElementById('modalBody');
-    
-    let links = '';
-    if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
-        links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
-    }
-    if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
-        links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" class="modal-link">📁 Яндекс папка</a>`;
-    }
-    
-    let rating = '';
-    if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
-    if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
-    
-    let detailsHtml = `<h3>${escapeHtml(movie.russianTitle)}</h3>`;
-    if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
-        detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
-    }
-    if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year))}</div>`;
-    if (movie.country && movie.country !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
-    if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
-    if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
-    if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
-    if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
-    if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
-    if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
-    if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
-    if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
-    
-    // Аудио дорожки - КАЖДАЯ С НОВОЙ СТРОКИ
-    if (movie.audioInfo && movie.audioInfo.length > 0) {
-        let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
-        for (const audio of movie.audioInfo) {
-            if (audio && audio !== '—') {
-                audioHtml += `<div style="display: block; padding: 5px 0 5px 20px; font-size: 12px; border-left: 2px solid var(--accent); margin: 4px 0;">🎧 ${escapeHtml(audio)}</div>`;
-            }
+    window.showMovieDetails = function(index) {
+        const movie = allMovies[index];
+        if (!movie) return;
+        
+        const modal = document.getElementById('modal');
+        const modalBody = document.getElementById('modalBody');
+        
+        let links = '';
+        if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
+            links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
         }
-        audioHtml += '</div>';
-        detailsHtml += audioHtml;
-    }
-    
-    // Субтитры - КАЖДЫЙ С НОВОЙ СТРОКИ
-    if (movie.subtitles && movie.subtitles.length > 0) {
-        let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
-        for (const sub of movie.subtitles) {
-            if (sub && sub !== '—') {
-                subsHtml += `<div style="display: block; padding: 3px 0; font-size: 12px;">📄 ${escapeHtml(sub)}</div>`;
-            }
+        if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
+            links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" class="modal-link">📁 Яндекс папка</a>`;
         }
-        subsHtml += '</div>';
-        detailsHtml += subsHtml;
-    }
-    
-    if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
-    if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
-    
-    modalBody.innerHTML = detailsHtml;
-    modal.style.display = 'flex';
-};
+        
+        let rating = '';
+        if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
+        if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
+        
+        let detailsHtml = `<h3>${escapeHtml(movie.russianTitle)}</h3>`;
+        if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
+            detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
+        }
+        if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year))}</div>`;
+        if (movie.country && movie.country !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
+        if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
+        if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
+        if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
+        if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
+        if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
+        if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
+        if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
+        if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
+        
+        // Аудио дорожки - УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК
+        if (movie.audioInfo && movie.audioInfo !== '—' && movie.audioInfo !== '') {
+            let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
+            let audioItems = [];
+            
+            if (Array.isArray(movie.audioInfo)) {
+                audioItems = movie.audioInfo;
+            } else if (typeof movie.audioInfo === 'string') {
+                // Разбиваем по разным разделителям
+                audioItems = movie.audioInfo.split(/(?=Аудио #\d+)|(?:\n)|(?:\r\n)/);
+                audioItems = audioItems.map(a => a.trim()).filter(a => a && a !== '—' && a.length > 0);
+                // Если не разбилось, просто берем строку целиком
+                if (audioItems.length === 0 && movie.audioInfo.length > 0) {
+                    audioItems = [movie.audioInfo];
+                }
+            }
+            
+            for (const audio of audioItems) {
+                if (audio && audio !== '—') {
+                    audioHtml += `<div style="display: block; padding: 5px 0 5px 20px; font-size: 12px; border-left: 2px solid var(--accent); margin: 4px 0; white-space: pre-wrap;">🎧 ${escapeHtml(audio)}</div>`;
+                }
+            }
+            audioHtml += '</div>';
+            detailsHtml += audioHtml;
+        }
+        
+        // Субтитры - УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК
+        if (movie.subtitles && movie.subtitles !== '—' && movie.subtitles !== '') {
+            let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+            let subItems = [];
+            
+            if (Array.isArray(movie.subtitles)) {
+                subItems = movie.subtitles;
+            } else if (typeof movie.subtitles === 'string') {
+                subItems = movie.subtitles.split(/[,;]/).map(s => s.trim()).filter(s => s && s !== '—');
+                if (subItems.length === 0 && movie.subtitles.length > 0) {
+                    subItems = [movie.subtitles];
+                }
+            }
+            
+            for (const sub of subItems) {
+                if (sub && sub !== '—') {
+                    subsHtml += `<div style="display: block; padding: 3px 0; font-size: 12px;">📄 ${escapeHtml(sub)}</div>`;
+                }
+            }
+            subsHtml += '</div>';
+            detailsHtml += subsHtml;
+        }
+        
+        if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
+        if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
+        
+        modalBody.innerHTML = detailsHtml;
+        modal.style.display = 'flex';
+    };
         
         // ===== СЛУЧАЙНЫЙ ФИЛЬМ =====
         document.getElementById('randomBtn').addEventListener('click', () => {
