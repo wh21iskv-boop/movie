@@ -11,7 +11,6 @@
             box-sizing: border-box;
         }
         
-        /* ===== ПЕРЕМЕННЫЕ ДЛЯ ТЕМ ===== */
         :root {
             --bg-gradient-start: #1a1a2e;
             --bg-gradient-end: #16213e;
@@ -52,7 +51,6 @@
             transition: background 0.3s, color 0.3s;
         }
         
-        /* Кнопка переключения темы */
         .theme-toggle {
             position: fixed;
             top: 20px;
@@ -99,7 +97,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Верхняя панель с сортировкой и случайным фильмом */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -114,11 +111,6 @@
             gap: 10px;
             align-items: center;
             flex-wrap: wrap;
-        }
-        
-        .sort-section label {
-            font-size: 14px;
-            color: var(--text-secondary);
         }
         
         .sort-select {
@@ -237,19 +229,30 @@
         
         .movie-poster {
             width: 100%;
-            height: 200px;
+            height: 250px;
             object-fit: cover;
             background: var(--bg-gradient-start);
         }
         
         .movie-poster-placeholder {
             width: 100%;
-            height: 200px;
+            height: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, var(--border-color) 0%, var(--bg-gradient-start) 100%);
             font-size: 48px;
+        }
+        
+        .poster-loading {
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-bg);
+            font-size: 14px;
+            color: var(--text-secondary);
         }
         
         .movie-info {
@@ -312,7 +315,6 @@
             margin: 0 auto 15px;
         }
         
-        /* Модальное окно */
         .modal {
             display: none;
             position: fixed;
@@ -457,8 +459,15 @@
     </div>
 
     <script>
+        // ===== НАСТРОЙКИ =====
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv';
         
+        // 🔴 ВСТАВЬТЕ ВАШ API-КЛЮЧ СЮДА 🔴
+        const KINOPOISK_API_KEY = '69f653a3-c233-4f46-b7af-422d1c98deb1';
+        const KINOPOISK_API_URL = 'https://kinopoiskapiunofficial.tech/api/';
+        
+        // Кеш для постеров
+        let posterCache = {};
         let allMovies = [];
         let filteredMovies = [];
         let uniqueGenres = new Set();
@@ -467,7 +476,161 @@
         let uniqueActors = new Set();
         let currentSort = 'default';
         
-        // ===== ТЕМНАЯ/СВЕТЛАЯ ТЕМА =====
+        // Загружаем кеш из localStorage
+        try {
+            const savedCache = localStorage.getItem('kinopoisk_posters');
+            if (savedCache) {
+                posterCache = JSON.parse(savedCache);
+                console.log('Загружено кешей постеров:', Object.keys(posterCache).length);
+            }
+        } catch(e) { console.error('Ошибка загрузки кеша:', e); }
+        
+        // Сохраняем кеш
+        function savePosterCache() {
+            try {
+                localStorage.setItem('kinopoisk_posters', JSON.stringify(posterCache));
+            } catch(e) { console.error('Ошибка сохранения кеша:', e); }
+        }
+        
+        // ===== API КИНОПОИСКА =====
+        async function searchMovieByTitle(title, year) {
+            if (!title || title === 'Фильм #') return null;
+            
+            const cacheKey = `title_${title}_${year || ''}`;
+            if (posterCache[cacheKey]) return posterCache[cacheKey];
+            
+            try {
+                const encodedTitle = encodeURIComponent(title);
+                const url = `${KINOPOISK_API_URL}v2.1/films/search-by-keyword?keyword=${encodedTitle}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'X-API-KEY': KINOPOISK_API_KEY, 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) return null;
+                
+                const data = await response.json();
+                if (data.films && data.films.length > 0) {
+                    let film = data.films[0];
+                    if (year) {
+                        const foundByYear = data.films.find(f => f.year === parseInt(year));
+                        if (foundByYear) film = foundByYear;
+                    }
+                    
+                    const posterData = {
+                        posterUrl: film.posterUrlPreview || film.posterUrl || '',
+                        filmId: film.filmId,
+                        nameRu: film.nameRu,
+                        nameEn: film.nameEn,
+                        rating: film.rating
+                    };
+                    
+                    posterCache[cacheKey] = posterData;
+                    savePosterCache();
+                    return posterData;
+                }
+                return null;
+            } catch (error) {
+                console.error(`Ошибка поиска "${title}":`, error);
+                return null;
+            }
+        }
+        
+        async function searchMovieById(kpId) {
+            if (!kpId) return null;
+            
+            if (posterCache[`id_${kpId}`]) return posterCache[`id_${kpId}`];
+            
+            try {
+                const url = `${KINOPOISK_API_URL}v2.2/films/${kpId}`;
+                const response = await fetch(url, {
+                    headers: { 'X-API-KEY': KINOPOISK_API_KEY, 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) return null;
+                
+                const film = await response.json();
+                const posterData = {
+                    posterUrl: film.posterUrlPreview || film.posterUrl || '',
+                    filmId: film.filmId,
+                    nameRu: film.nameRu,
+                    nameEn: film.nameEn,
+                    rating: film.ratingKinopoisk
+                };
+                
+                posterCache[`id_${kpId}`] = posterData;
+                savePosterCache();
+                return posterData;
+            } catch (error) {
+                console.error(`Ошибка поиска по ID ${kpId}:`, error);
+                return null;
+            }
+        }
+        
+        async function loadPosterForMovie(movie, index) {
+            if (!movie) return;
+            
+            // Если уже есть постер
+            if (movie.poster && movie.poster.startsWith('http')) {
+                updatePosterInCard(index, movie.poster);
+                return;
+            }
+            
+            // Поиск по ID Кинопоиска (приоритет)
+            if (movie.kinopoiskId && movie.kinopoiskId !== '—' && !isNaN(parseInt(movie.kinopoiskId))) {
+                const posterData = await searchMovieById(movie.kinopoiskId);
+                if (posterData && posterData.posterUrl) {
+                    updatePosterInCard(index, posterData.posterUrl);
+                    movie.poster = posterData.posterUrl;
+                    if (!movie.ratingKP && posterData.rating) movie.ratingKP = posterData.rating;
+                    return;
+                }
+            }
+            
+            // Поиск по русскому названию
+            if (movie.russianTitle && movie.russianTitle !== 'Фильм #') {
+                const posterData = await searchMovieByTitle(movie.russianTitle, movie.year);
+                if (posterData && posterData.posterUrl) {
+                    updatePosterInCard(index, posterData.posterUrl);
+                    movie.poster = posterData.posterUrl;
+                    if (!movie.ratingKP && posterData.rating) movie.ratingKP = posterData.rating;
+                    // Сохраняем найденный ID для будущего
+                    if (posterData.filmId && !movie.kinopoiskId) {
+                        movie.kinopoiskId = posterData.filmId;
+                    }
+                    return;
+                }
+            }
+            
+            // Поиск по оригинальному названию
+            if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
+                const posterData = await searchMovieByTitle(movie.originalTitle, movie.year);
+                if (posterData && posterData.posterUrl) {
+                    updatePosterInCard(index, posterData.posterUrl);
+                    movie.poster = posterData.posterUrl;
+                    if (!movie.ratingKP && posterData.rating) movie.ratingKP = posterData.rating;
+                    if (posterData.filmId && !movie.kinopoiskId) {
+                        movie.kinopoiskId = posterData.filmId;
+                    }
+                    return;
+                }
+            }
+            
+            updatePosterInCard(index, null);
+        }
+        
+        function updatePosterInCard(index, posterUrl) {
+            const posterElement = document.getElementById(`poster-${index}`);
+            if (posterElement) {
+                if (posterUrl) {
+                    posterElement.innerHTML = `<img class="movie-poster" src="${escapeHtml(posterUrl)}" alt="Постер" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`;
+                } else {
+                    posterElement.innerHTML = '<div class="movie-poster-placeholder">🎬</div>';
+                }
+            }
+        }
+        
+        // ===== ТЕМА =====
         const themeToggle = document.getElementById('themeToggle');
         const savedTheme = localStorage.getItem('theme') || 'dark';
         if (savedTheme === 'light') {
@@ -481,95 +644,73 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
         
-    window.showMovieDetails = function(index) {
-        const movie = allMovies[index];
-        if (!movie) return;
-        
-        const modal = document.getElementById('modal');
-        const modalBody = document.getElementById('modalBody');
-        
-        let links = '';
-        if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
-            links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
-        }
-        if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
-            links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" class="modal-link">📁 Яндекс папка</a>`;
-        }
-        
-        let rating = '';
-        if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
-        if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
-        
-        let detailsHtml = `<h3>${escapeHtml(movie.russianTitle)}</h3>`;
-        if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
-            detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
-        }
-        if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year))}</div>`;
-        if (movie.country && movie.country !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
-        if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
-        if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
-        if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
-        if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
-        if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
-        if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
-        if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
-        if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
-        
-        // Аудио дорожки - УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК
-        if (movie.audioInfo && movie.audioInfo !== '—' && movie.audioInfo !== '') {
-            let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
-            let audioItems = [];
+        // ===== ПОКАЗ ДЕТАЛЕЙ =====
+        window.showMovieDetails = function(index) {
+            const movie = allMovies[index];
+            if (!movie) return;
             
-            if (Array.isArray(movie.audioInfo)) {
-                audioItems = movie.audioInfo;
-            } else if (typeof movie.audioInfo === 'string') {
-                // Разбиваем по разным разделителям
-                audioItems = movie.audioInfo.split(/(?=Аудио #\d+)|(?:\n)|(?:\r\n)/);
-                audioItems = audioItems.map(a => a.trim()).filter(a => a && a !== '—' && a.length > 0);
-                // Если не разбилось, просто берем строку целиком
-                if (audioItems.length === 0 && movie.audioInfo.length > 0) {
-                    audioItems = [movie.audioInfo];
-                }
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modalBody');
+            
+            let links = '';
+            if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
+                links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
+            }
+            if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
+                links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" class="modal-link">📁 Яндекс папка</a>`;
             }
             
-            for (const audio of audioItems) {
-                if (audio && audio !== '—') {
-                    audioHtml += `<div style="display: block; padding: 5px 0 5px 20px; font-size: 12px; border-left: 2px solid var(--accent); margin: 4px 0; white-space: pre-wrap;">🎧 ${escapeHtml(audio)}</div>`;
-                }
-            }
-            audioHtml += '</div>';
-            detailsHtml += audioHtml;
-        }
-        
-        // Субтитры - УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК
-        if (movie.subtitles && movie.subtitles !== '—' && movie.subtitles !== '') {
-            let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
-            let subItems = [];
+            let rating = '';
+            if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
+            if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
             
-            if (Array.isArray(movie.subtitles)) {
-                subItems = movie.subtitles;
-            } else if (typeof movie.subtitles === 'string') {
-                subItems = movie.subtitles.split(/[,;]/).map(s => s.trim()).filter(s => s && s !== '—');
-                if (subItems.length === 0 && movie.subtitles.length > 0) {
-                    subItems = [movie.subtitles];
+            let detailsHtml = `<h3>${escapeHtml(movie.russianTitle)}</h3>`;
+            if (movie.originalTitle && movie.originalTitle !== movie.russianTitle) {
+                detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
+            }
+            if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(extractYear(movie.year))}</div>`;
+            if (movie.country && movie.country !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
+            if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
+            if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
+            if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
+            if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
+            if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
+            if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
+            if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
+            if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
+            
+            // Аудио
+            if (movie.audioInfo && movie.audioInfo.length > 0) {
+                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
+                let audioItems = Array.isArray(movie.audioInfo) ? movie.audioInfo : [movie.audioInfo];
+                for (const audio of audioItems) {
+                    if (audio && audio !== '—') {
+                        audioHtml += `<div style="display: block; padding: 5px 0 5px 20px; font-size: 12px; border-left: 2px solid var(--accent); margin: 4px 0;">🎧 ${escapeHtml(audio)}</div>`;
+                    }
                 }
+                audioHtml += '</div>';
+                detailsHtml += audioHtml;
             }
             
-            for (const sub of subItems) {
-                if (sub && sub !== '—') {
-                    subsHtml += `<div style="display: block; padding: 3px 0; font-size: 12px;">📄 ${escapeHtml(sub)}</div>`;
+            // Субтитры
+            if (movie.subtitles && movie.subtitles.length > 0) {
+                let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+                let subItems = Array.isArray(movie.subtitles) ? movie.subtitles : [movie.subtitles];
+                for (const sub of subItems) {
+                    if (sub && sub !== '—') {
+                        subsHtml += `<div style="display: block; padding: 3px 0; font-size: 12px;">📄 ${escapeHtml(sub)}</div>`;
+                    }
                 }
+                subsHtml += '</div>';
+                detailsHtml += subsHtml;
             }
-            subsHtml += '</div>';
-            detailsHtml += subsHtml;
-        }
-        
-        if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
-        if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
-        
-        modalBody.innerHTML = detailsHtml;
-        modal.style.display = 'flex';
-    };
+            
+            if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
+            if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
+            
+            modalBody.innerHTML = detailsHtml;
+            modal.style.display = 'flex';
+        };
         
         // ===== СЛУЧАЙНЫЙ ФИЛЬМ =====
         document.getElementById('randomBtn').addEventListener('click', () => {
@@ -613,6 +754,7 @@
             return sorted;
         }
         
+        // ===== ЗАГРУЗКА ДАННЫХ =====
         async function loadMovies() {
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
@@ -631,27 +773,30 @@
                     return -1;
                 }
                 
+                // Индексы колонок (последняя - Кинопоиск ID)
                 const idx = {
                     year: findCol(['Год выпуска', 'Год']),
                     originalTitle: findCol(['Оригинальное название', 'Оригинал']),
                     russianTitle: findCol(['Русское название', 'Название русское']),
                     genre: findCol(['Жанр']),
-                    description: findCol(['Описание']),
-                    kinopoiskLink: findCol(['Киноопись', 'ссылка']),
-                    ratingKP: findCol(['Оценка Киноискусства', 'Киноискусства']),
+                    description: findCol(['Описание фильма', 'Описание']),
+                    kinopoiskLink: findCol(['Киноискусская', 'Киноопись', 'ссылка']),
+                    ratingKP: findCol(['Оценка Кинопоиска', 'Оценка Кинопоиск']),
                     ratingIMDb: findCol(['Оценка ИМДБ', 'IMDb']),
-                    actors: findCol(['Актерский фестиваль', 'Актеры']),
+                    actors: findCol(['Актерский состав', 'Актеры']),
                     country: findCol(['Страна']),
-                    director: findCol(['Режиссёр', 'Режиссер']),
-                    fileName: findCol(['Имя файла', 'Файл']),
-                    duration: findCol(['Длительность']),
-                    size: findCol(['Размер']),
+                    director: findCol(['Режиссер', 'Режиссёр']),
+                    fileName: findCol(['Инв. файла', 'Имя файла']),
+                    duration: findCol(['Длительность чел/мес', 'Длительность']),
+                    size: findCol(['Размер (ГБ)', 'Размер']),
                     resolution: findCol(['Разрешение']),
                     audio: findCol(['Аудио информация', 'Аудио']),
                     subtitles: findCol(['Субтитр', 'Субтитры']),
-                    yandex: findCol(['Папка на Яндекс', 'Яндекс']),
-                    poster: findCol(['Постер', 'Постер ссылка', 'Poster'])
+                    yandex: findCol(['Папка на 1Кинопоиск ID', 'Папка на Яндекс', 'Яндекс']),
+                    kinopoiskId: findCol(['Кинопоиск ID', '1Кинопоиск ID', 'kp_id'])  // последняя колонка
                 };
+                
+                console.log('Найденные индексы:', idx);
                 
                 allMovies = [];
                 for (let i = 1; i < rows.length; i++) {
@@ -660,23 +805,19 @@
                     
                     const getVal = (i) => (i !== -1 && i < row.length) ? (row[i] || '').trim() : '';
                     
-                    const russianTitle = getVal(idx.russianTitle);
-                    const originalTitle = getVal(idx.originalTitle);
+                    let russianTitle = getVal(idx.russianTitle);
+                    let originalTitle = getVal(idx.originalTitle);
                     
-                    // ТЕПЕРЬ НЕ ПРОПУСКАЕМ СТРОКИ БЕЗ НАЗВАНИЯ - создаём заглушку
-                    let displayTitle = russianTitle || originalTitle;
-                    let displayOriginal = originalTitle;
-                    
-                    if (!displayTitle) {
-                        displayTitle = `Фильм #${i}`;
-                        displayOriginal = '';
+                    if (!russianTitle && originalTitle) {
+                        russianTitle = originalTitle;
+                        originalTitle = '';
                     }
                     
-                    if (displayTitle === '—' || displayTitle === '-') {
-                        displayTitle = `Фильм #${i}`;
+                    if (!russianTitle || russianTitle === '—' || russianTitle === '-') {
+                        russianTitle = `Фильм #${i}`;
                     }
                     
-                    // Очищаем рейтинг
+                    // Очищаем рейтинги
                     let ratingKP = getVal(idx.ratingKP);
                     if (ratingKP && (ratingKP.includes('kinopoisk') || ratingKP.includes('http'))) {
                         const match = ratingKP.match(/(\d+[,.]?\d*)/);
@@ -705,8 +846,8 @@
                     
                     const movie = {
                         id: i,
-                        russianTitle: displayTitle,
-                        originalTitle: displayOriginal !== displayTitle ? displayOriginal : '',
+                        russianTitle: russianTitle,
+                        originalTitle: originalTitle,
                         year: getVal(idx.year),
                         genre: getVal(idx.genre),
                         description: getVal(idx.description),
@@ -723,16 +864,17 @@
                         audioInfo: audioArray,
                         subtitles: subArray,
                         yandexFolder: getVal(idx.yandex),
-                        poster: getVal(idx.poster)
+                        kinopoiskId: getVal(idx.kinopoiskId),
+                        poster: ''
                     };
                     
                     allMovies.push(movie);
                     
-                    // Собираем уникальные значения для фильтров
+                    // Собираем уникальные значения
                     if (movie.genre && movie.genre !== '—') {
                         movie.genre.split(/[,;\/]/).forEach(g => {
                             const genre = g.trim();
-                            if (genre && genre.length > 1 && genre !== '—') uniqueGenres.add(genre);
+                            if (genre && genre.length > 1) uniqueGenres.add(genre);
                         });
                     }
                     
@@ -773,7 +915,7 @@
                 applyFilterAndSort();
                 
             } catch (error) {
-                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${escapeHtml(error.message)}</div>`;
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${escapeHtml(error.message)}<br><br>Проверьте консоль (F12)</div>`;
             }
         }
         
@@ -864,15 +1006,15 @@
             }
             
             let cardsHtml = '<div class="movies-grid">';
-            for (const movie of movies) {
+            for (let i = 0; i < movies.length; i++) {
+                const movie = movies[i];
                 const originalIndex = allMovies.findIndex(m => m.id === movie.id);
-                const posterHtml = movie.poster && movie.poster.startsWith('http') 
-                    ? `<img class="movie-poster" src="${escapeHtml(movie.poster)}" alt="${escapeHtml(movie.russianTitle)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
-                    : `<div class="movie-poster-placeholder">🎬</div>`;
                 
                 cardsHtml += `
                     <div class="movie-card" onclick="showMovieDetails(${originalIndex})">
-                        ${posterHtml}
+                        <div id="poster-${originalIndex}" class="poster-loading">
+                            <div style="text-align:center;">🎬<br><span style="font-size:11px;">Загрузка постера...</span></div>
+                        </div>
                         <div class="movie-info">
                             <div class="movie-title">${escapeHtml(movie.russianTitle.length > 60 ? movie.russianTitle.substring(0,60)+'...' : movie.russianTitle)}</div>
                             ${movie.originalTitle ? `<div class="movie-title-original">${escapeHtml(movie.originalTitle.length > 50 ? movie.originalTitle.substring(0,50)+'...' : movie.originalTitle)}</div>` : ''}
@@ -886,6 +1028,13 @@
             }
             cardsHtml += '</div>';
             contentDiv.innerHTML = cardsHtml;
+            
+            // Асинхронно загружаем постеры с задержкой
+            for (let i = 0; i < movies.length; i++) {
+                const movie = movies[i];
+                const originalIndex = allMovies.findIndex(m => m.id === movie.id);
+                setTimeout(() => loadPosterForMovie(movie, originalIndex), i * 150);
+            }
         }
         
         let searchTimeout;
