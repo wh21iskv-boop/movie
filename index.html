@@ -55,10 +55,6 @@
             background: rgba(255,255,255,0.15);
         }
         
-        #searchInput::placeholder {
-            color: rgba(255,255,255,0.6);
-        }
-        
         .filters {
             display: flex;
             gap: 15px;
@@ -66,18 +62,13 @@
             flex-wrap: wrap;
         }
         
-        select, .year-filter {
+        select {
             padding: 10px 20px;
             border-radius: 25px;
             border: 1px solid #2d3561;
             background: rgba(255,255,255,0.1);
             color: white;
             cursor: pointer;
-            font-size: 14px;
-        }
-        
-        select option {
-            background: #1a1a2e;
         }
         
         .stats {
@@ -117,12 +108,6 @@
             font-weight: bold;
             margin-bottom: 8px;
             color: white;
-        }
-        
-        .movie-title-rus {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-bottom: 8px;
         }
         
         .movie-detail {
@@ -181,7 +166,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -190,29 +175,48 @@
         .modal-content {
             background: #1a1a2e;
             border-radius: 15px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
             padding: 25px;
+            border: 1px solid #2d3561;
         }
         
         .close-modal {
             float: right;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 28px;
             color: #667eea;
+            font-weight: bold;
+        }
+        
+        .close-modal:hover {
+            color: #ff6b6b;
         }
         
         .modal h3 {
             margin-bottom: 15px;
             color: #667eea;
+            font-size: 22px;
         }
         
         .modal-detail {
             margin: 10px 0;
             padding: 8px;
             border-bottom: 1px solid #2d3561;
+        }
+        
+        .modal-link {
+            display: inline-block;
+            margin-top: 10px;
+            margin-right: 15px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .modal-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -228,9 +232,6 @@
                 </select>
                 <select id="yearFilter">
                     <option value="">Все годы</option>
-                </select>
-                <select id="countryFilter">
-                    <option value="">Все страны</option>
                 </select>
             </div>
         </div>
@@ -253,114 +254,115 @@
     </div>
 
     <script>
-        // ⚠️ ВСТАВЬТЕ ВАШУ ССЫЛКУ ЗДЕСЬ ⚠️
-        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv';
+        // ВАША ССЫЛКА
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3Ima7Qye4NmVP1jMRk95erowQHhMDT9srmIFAqq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv';
         
         let allMovies = [];
         let uniqueGenres = new Set();
         let uniqueYears = new Set();
-        let uniqueCountries = new Set();
-        
-        // Индексы колонок (определятся автоматически)
-        let colIndex = {};
         
         async function loadMovies() {
             const contentDiv = document.getElementById('content');
             
             try {
-                console.log('Загрузка данных из:', GOOGLE_SHEET_CSV_URL);
+                console.log('Загрузка...');
                 
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                
-                if (!response.ok) {
-                    throw new Error(`Ошибка HTTP: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const csvText = await response.text();
                 console.log('Получено символов:', csvText.length);
                 
-                if (csvText.length < 10) {
-                    throw new Error('Файл пустой. Проверьте публикацию таблицы.');
-                }
-                
-                // Парсим CSV
                 const rows = parseCSV(csvText);
-                console.log('Найдено строк:', rows.length);
+                console.log('Строк в CSV:', rows.length);
                 
-                if (rows.length < 2) {
-                    throw new Error('Нет данных. Первая строка должна содержать заголовки.');
+                if (rows.length < 2) throw new Error('Нет данных');
+                
+                // Показываем первые 3 заголовка для отладки
+                console.log('Заголовки:', rows[0]);
+                
+                // Ищем индексы колонок (проверяем первые 10 строк для отладки)
+                const headers = rows[0];
+                let titleIndex = -1;
+                let yearIndex = -1;
+                let genreIndex = -1;
+                let ratingIndex = -1;
+                let directorIndex = -1;
+                let actorsIndex = -1;
+                let descriptionIndex = -1;
+                let countryIndex = -1;
+                
+                // Ищем нужные колонки по разным вариантам названий
+                for (let i = 0; i < headers.length; i++) {
+                    const h = headers[i].toLowerCase();
+                    console.log(`Колонка ${i}: "${headers[i]}"`);
+                    
+                    if (h.includes('название') || h.includes('title') || h.includes('фильм')) {
+                        titleIndex = i;
+                        console.log(`→ Найдено название в колонке ${i}`);
+                    }
+                    if (h.includes('год') || h.includes('year') || h.includes('дата')) {
+                        yearIndex = i;
+                        console.log(`→ Найдены год в колонке ${i}`);
+                    }
+                    if (h.includes('жанр') || h.includes('genre')) {
+                        genreIndex = i;
+                        console.log(`→ Найден жанр в колонке ${i}`);
+                    }
+                    if (h.includes('рейтинг') || h.includes('rating') || h.includes('оценка')) {
+                        ratingIndex = i;
+                        console.log(`→ Найден рейтинг в колонке ${i}`);
+                    }
+                    if (h.includes('режисс') || h.includes('director')) {
+                        directorIndex = i;
+                        console.log(`→ Найден режиссер в колонке ${i}`);
+                    }
+                    if (h.includes('актер') || h.includes('actor') || h.includes('в ролях')) {
+                        actorsIndex = i;
+                        console.log(`→ Найдены актеры в колонке ${i}`);
+                    }
+                    if (h.includes('описан') || h.includes('description') || h.includes('сюжет')) {
+                        descriptionIndex = i;
+                        console.log(`→ Найдено описание в колонке ${i}`);
+                    }
+                    if (h.includes('стран') || h.includes('country')) {
+                        countryIndex = i;
+                        console.log(`→ Найдена страна в колонке ${i}`);
+                    }
                 }
                 
-                // Определяем индексы колонок по заголовкам
-                const headers = rows[0];
-                console.log('Заголовки:', headers);
-                
-                // Маппинг русских заголовков
-                colIndex = {
-                    year: findColumn(headers, ['Год выпуска', 'Год', 'Year']),
-                    originalTitle: findColumn(headers, ['Оригинальное название', 'Original title', 'Оригинал']),
-                    russianTitle: findColumn(headers, ['Русское название', 'Название', 'Title', 'Русский']),
-                    genre: findColumn(headers, ['Жанр', 'Genre']),
-                    description: findColumn(headers, ['Описание', 'Description', 'Сюжет']),
-                    kinoriumLink: findColumn(headers, ['Кинориум', 'Кинориум ссылка', 'Kinorium']),
-                    kinopoiskLink: findColumn(headers, ['Кинопоиск', 'Кинопоиск ссылка', 'Kinopoisk']),
-                    kinopoiskRating: findColumn(headers, ['Оценка Кинопоиск', 'КП оценка', 'Kinopoisk rating']),
-                    imdbRating: findColumn(headers, ['Оценка IMDb', 'IMDb', 'IMDb rating']),
-                    actors: findColumn(headers, ['Актерский состав', 'Актеры', 'Actors', 'В ролях']),
-                    premiereDate: findColumn(headers, ['Дата премьеры', 'Премьера', 'Release date']),
-                    country: findColumn(headers, ['Страна', 'Country', 'Страны']),
-                    director: findColumn(headers, ['Режиссер', 'Director', 'Режиссёр']),
-                    fileName: findColumn(headers, ['Имя файла', 'Файл', 'Filename']),
-                    duration: findColumn(headers, ['Длительность', 'Duration', 'Время']),
-                    size: findColumn(headers, ['Размер', 'Size', 'ГБ']),
-                    resolution: findColumn(headers, ['Разрешение', 'Resolution', 'Quality']),
-                    audioInfo: findColumn(headers, ['Аудио информация', 'Аудио', 'Audio']),
-                    videoCodec: findColumn(headers, ['Видеокодек', 'Codec', 'Video']),
-                    bitrate: findColumn(headers, ['Битрейт', 'Bitrate']),
-                    subtitles: findColumn(headers, ['Субтитры', 'Subtitles']),
-                    yandexFolder: findColumn(headers, ['Папка на Яндексе', 'Яндекс', 'Yandex', 'Папка'])
-                };
-                
-                console.log('Найдены колонки:', colIndex);
+                // Если не нашли название, берем первую колонку
+                if (titleIndex === -1 && headers.length > 0) {
+                    titleIndex = 0;
+                    console.log('→ Используем первую колонку как название');
+                }
                 
                 // Парсим данные
                 allMovies = [];
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i];
-                    const russianTitle = getValue(row, colIndex.russianTitle);
-                    const originalTitle = getValue(row, colIndex.originalTitle);
+                    if (row.length === 0) continue;
                     
-                    // Пропускаем пустые строки
-                    if (!russianTitle && !originalTitle) continue;
+                    let title = titleIndex !== -1 && titleIndex < row.length ? row[titleIndex]?.trim() : '';
+                    if (!title && row.length > 0) title = row[0]?.trim();
+                    if (!title) continue;
                     
                     const movie = {
-                        year: getValue(row, colIndex.year),
-                        originalTitle: originalTitle,
-                        russianTitle: russianTitle || originalTitle,
-                        genre: getValue(row, colIndex.genre),
-                        description: getValue(row, colIndex.description),
-                        kinoriumLink: getValue(row, colIndex.kinoriumLink),
-                        kinopoiskLink: getValue(row, colIndex.kinopoiskLink),
-                        kinopoiskRating: getValue(row, colIndex.kinopoiskRating),
-                        imdbRating: getValue(row, colIndex.imdbRating),
-                        actors: getValue(row, colIndex.actors),
-                        premiereDate: getValue(row, colIndex.premiereDate),
-                        country: getValue(row, colIndex.country),
-                        director: getValue(row, colIndex.director),
-                        fileName: getValue(row, colIndex.fileName),
-                        duration: getValue(row, colIndex.duration),
-                        size: getValue(row, colIndex.size),
-                        resolution: getValue(row, colIndex.resolution),
-                        audioInfo: getValue(row, colIndex.audioInfo),
-                        videoCodec: getValue(row, colIndex.videoCodec),
-                        bitrate: getValue(row, colIndex.bitrate),
-                        subtitles: getValue(row, colIndex.subtitles),
-                        yandexFolder: getValue(row, colIndex.yandexFolder)
+                        title: title,
+                        year: yearIndex !== -1 && yearIndex < row.length ? row[yearIndex]?.trim() : '',
+                        genre: genreIndex !== -1 && genreIndex < row.length ? row[genreIndex]?.trim() : '',
+                        rating: ratingIndex !== -1 && ratingIndex < row.length ? row[ratingIndex]?.trim() : '',
+                        director: directorIndex !== -1 && directorIndex < row.length ? row[directorIndex]?.trim() : '',
+                        actors: actorsIndex !== -1 && actorsIndex < row.length ? row[actorsIndex]?.trim() : '',
+                        description: descriptionIndex !== -1 && descriptionIndex < row.length ? row[descriptionIndex]?.trim() : '',
+                        country: countryIndex !== -1 && countryIndex < row.length ? row[countryIndex]?.trim() : '',
+                        // Сохраняем все данные для модального окна
+                        rawData: row
                     };
                     
                     allMovies.push(movie);
                     
-                    // Собираем уникальные значения для фильтров
+                    // Собираем жанры
                     if (movie.genre) {
                         movie.genre.split(/[,;\/]/).forEach(g => {
                             const genre = g.trim();
@@ -370,25 +372,31 @@
                         });
                     }
                     
+                    // Собираем года
                     if (movie.year && movie.year !== '—' && movie.year !== '-') {
                         uniqueYears.add(movie.year);
-                    }
-                    
-                    if (movie.country && movie.country !== '—' && movie.country !== '-') {
-                        uniqueCountries.add(movie.country);
                     }
                 }
                 
                 console.log('Загружено фильмов:', allMovies.length);
+                console.log('Пример первого фильма:', allMovies[0]);
                 
                 if (allMovies.length === 0) {
-                    throw new Error('Не найдено фильмов. Проверьте структуру таблицы.');
+                    throw new Error('Не найдено фильмов');
                 }
                 
                 // Заполняем фильтры
-                populateFilter('genreFilter', uniqueGenres);
-                populateFilter('yearFilter', uniqueYears, true);
-                populateFilter('countryFilter', uniqueCountries);
+                const genreSelect = document.getElementById('genreFilter');
+                genreSelect.innerHTML = '<option value="">Все жанры</option>';
+                Array.from(uniqueGenres).sort().forEach(genre => {
+                    genreSelect.innerHTML += `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`;
+                });
+                
+                const yearSelect = document.getElementById('yearFilter');
+                yearSelect.innerHTML = '<option value="">Все годы</option>';
+                Array.from(uniqueYears).sort((a,b) => parseInt(b) - parseInt(a)).forEach(year => {
+                    yearSelect.innerHTML += `<option value="${escapeHtml(year)}">${escapeHtml(year)}</option>`;
+                });
                 
                 displayMovies(allMovies);
                 
@@ -396,55 +404,14 @@
                 console.error('Ошибка:', error);
                 document.getElementById('content').innerHTML = `
                     <div class="error">
-                        ❌ Ошибка загрузки данных<br><br>
-                        ${escapeHtml(error.message)}<br><br>
-                        <strong>Проверьте:</strong><br>
-                        • Таблица опубликована (Файл → Опубликовать в интернете)<br>
-                        • Ссылка правильная (заканчивается на /pub?output=csv)<br>
-                        • Первая строка содержит заголовки<br>
-                        • В таблице есть данные
+                        ❌ Ошибка: ${escapeHtml(error.message)}<br><br>
+                        <strong>Проверьте в консоли (F12):</strong><br>
+                        • Откройте вкладку Console<br>
+                        • Посмотрите какие колонки найдены<br>
+                        • Убедитесь что таблица опубликована
                     </div>
                 `;
             }
-        }
-        
-        function getValue(row, index) {
-            if (index === -1 || index >= row.length) return '';
-            return row[index]?.trim() || '';
-        }
-        
-        function findColumn(headers, possibleNames) {
-            for (let i = 0; i < headers.length; i++) {
-                const header = headers[i].toLowerCase().trim();
-                for (const name of possibleNames) {
-                    if (header.includes(name.toLowerCase())) {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-        
-        function populateFilter(filterId, valuesSet, sortAsNumbers = false) {
-            const select = document.getElementById(filterId);
-            let values = Array.from(valuesSet);
-            
-            if (sortAsNumbers) {
-                values.sort((a, b) => {
-                    const numA = parseInt(a);
-                    const numB = parseInt(b);
-                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                    return a.localeCompare(b);
-                });
-            } else {
-                values.sort();
-            }
-            
-            values.forEach(value => {
-                if (value && value !== '—' && value !== '-' && value !== 'Не указан') {
-                    select.innerHTML += `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`;
-                }
-            });
         }
         
         function parseCSV(csvText) {
@@ -470,7 +437,7 @@
                 } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
                     if (char === '\r') i++;
                     currentRow.push(currentField);
-                    if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
+                    if (currentRow.length > 0) {
                         rows.push(currentRow);
                     }
                     currentRow = [];
@@ -482,7 +449,7 @@
             
             if (currentField || currentRow.length > 0) {
                 currentRow.push(currentField);
-                if (currentRow.length > 0 && !(currentRow.length === 1 && currentRow[0] === '')) {
+                if (currentRow.length > 0) {
                     rows.push(currentRow);
                 }
             }
@@ -501,37 +468,17 @@
             const modal = document.getElementById('modal');
             const modalBody = document.getElementById('modalBody');
             
-            let links = '';
-            if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
-                links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" style="color:#667eea; margin-right:15px;">🎬 Кинопоиск</a>`;
-            }
-            if (movie.kinoriumLink && movie.kinoriumLink.startsWith('http')) {
-                links += `<a href="${escapeHtml(movie.kinoriumLink)}" target="_blank" style="color:#667eea;">📽 Кинориум</a>`;
-            }
-            if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
-                links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" style="color:#667eea; margin-left:15px;">📁 Яндекс Папка</a>`;
-            }
+            let detailsHtml = `<h3>${escapeHtml(movie.title)}</h3>`;
             
-            modalBody.innerHTML = `
-                <h3>${escapeHtml(movie.russianTitle)}</h3>
-                ${movie.originalTitle ? `<div class="modal-detail"><span class="movie-label">Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>` : ''}
-                ${movie.year ? `<div class="modal-detail"><span class="movie-label">Год:</span> ${escapeHtml(movie.year)}</div>` : ''}
-                ${movie.country ? `<div class="modal-detail"><span class="movie-label">Страна:</span> ${escapeHtml(movie.country)}</div>` : ''}
-                ${movie.genre ? `<div class="modal-detail"><span class="movie-label">Жанр:</span> ${escapeHtml(movie.genre)}</div>` : ''}
-                ${movie.director ? `<div class="modal-detail"><span class="movie-label">Режиссер:</span> ${escapeHtml(movie.director)}</div>` : ''}
-                ${movie.actors ? `<div class="modal-detail"><span class="movie-label">Актеры:</span> ${escapeHtml(movie.actors)}</div>` : ''}
-                ${movie.description ? `<div class="modal-detail"><span class="movie-label">Описание:</span> ${escapeHtml(movie.description)}</div>` : ''}
-                ${movie.kinopoiskRating ? `<div class="modal-detail"><span class="movie-label">Кинопоиск:</span> ⭐ ${escapeHtml(movie.kinopoiskRating)}</div>` : ''}
-                ${movie.imdbRating ? `<div class="modal-detail"><span class="movie-label">IMDb:</span> ⭐ ${escapeHtml(movie.imdbRating)}</div>` : ''}
-                ${movie.duration ? `<div class="modal-detail"><span class="movie-label">Длительность:</span> ${escapeHtml(movie.duration)}</div>` : ''}
-                ${movie.size ? `<div class="modal-detail"><span class="movie-label">Размер:</span> ${escapeHtml(movie.size)} ГБ</div>` : ''}
-                ${movie.resolution ? `<div class="modal-detail"><span class="movie-label">Разрешение:</span> ${escapeHtml(movie.resolution)}</div>` : ''}
-                ${movie.audioInfo ? `<div class="modal-detail"><span class="movie-label">Аудио:</span> ${escapeHtml(movie.audioInfo)}</div>` : ''}
-                ${movie.subtitles ? `<div class="modal-detail"><span class="movie-label">Субтитры:</span> ${escapeHtml(movie.subtitles)}</div>` : ''}
-                ${movie.fileName ? `<div class="modal-detail"><span class="movie-label">Файл:</span> ${escapeHtml(movie.fileName)}</div>` : ''}
-                ${links ? `<div class="modal-detail"><span class="movie-label">Ссылки:</span><br>${links}</div>` : ''}
-            `;
+            if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(movie.year)}</div>`;
+            if (movie.country) detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
+            if (movie.genre) detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
+            if (movie.director) detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
+            if (movie.actors) detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
+            if (movie.rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(movie.rating)}</div>`;
+            if (movie.description) detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
             
+            modalBody.innerHTML = detailsHtml;
             modal.style.display = 'flex';
         }
         
@@ -549,22 +496,13 @@
             const moviesHtml = `
                 <div class="movies-grid">
                     ${movies.map(movie => `
-                        <div class="movie-card" onclick="showMovieDetails(${JSON.stringify(movie).replace(/</g, '\\u003c')})">
+                        <div class="movie-card" onclick='showMovieDetails(${JSON.stringify(movie).replace(/'/g, "\\'")})'>
                             <div class="movie-info">
-                                <div class="movie-title">🎬 ${escapeHtml(movie.russianTitle)}</div>
-                                ${movie.originalTitle ? `<div class="movie-title-rus">${escapeHtml(movie.originalTitle)}</div>` : ''}
-                                <div class="movie-detail">
-                                    <span class="movie-label">📅 Год:</span> ${escapeHtml(movie.year || '—')}
-                                </div>
-                                <div class="movie-detail">
-                                    <span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre && movie.genre.length > 50 ? movie.genre.substring(0, 50) + '...' : movie.genre || '—')}
-                                </div>
-                                <div class="movie-detail">
-                                    <span class="movie-label">⭐ Рейтинг:</span> ${escapeHtml(movie.kinopoiskRating || movie.imdbRating || '—')}
-                                </div>
-                                <div class="movie-detail">
-                                    <span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director && movie.director.length > 40 ? movie.director.substring(0, 40) + '...' : movie.director || '—')}
-                                </div>
+                                <div class="movie-title">🎬 ${escapeHtml(movie.title.length > 50 ? movie.title.substring(0, 50) + '...' : movie.title)}</div>
+                                ${movie.year ? `<div class="movie-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(movie.year)}</div>` : ''}
+                                ${movie.genre ? `<div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre.length > 50 ? movie.genre.substring(0, 50) + '...' : movie.genre)}</div>` : ''}
+                                ${movie.rating ? `<div class="movie-detail"><span class="movie-label">⭐ Рейтинг:</span> ${escapeHtml(movie.rating)}</div>` : ''}
+                                ${movie.director ? `<div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director.length > 40 ? movie.director.substring(0, 40) + '...' : movie.director)}</div>` : ''}
                             </div>
                         </div>
                     `).join('')}
@@ -578,12 +516,10 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const selectedGenre = document.getElementById('genreFilter').value;
             const selectedYear = document.getElementById('yearFilter').value;
-            const selectedCountry = document.getElementById('countryFilter').value;
             
             const filtered = allMovies.filter(movie => {
                 const searchFields = [
-                    movie.russianTitle,
-                    movie.originalTitle,
+                    movie.title,
                     movie.genre,
                     movie.actors,
                     movie.director,
@@ -599,24 +535,21 @@
                 }
                 
                 const matchesYear = !selectedYear || movie.year === selectedYear;
-                const matchesCountry = !selectedCountry || (movie.country || '').includes(selectedCountry);
                 
-                return matchesSearch && matchesGenre && matchesYear && matchesCountry;
+                return matchesSearch && matchesGenre && matchesYear;
             });
             
             displayMovies(filtered);
         }
         
-        // Обработчики событий
+        // Обработчики
         let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(filterMovies, 300);
         });
-        
         document.getElementById('genreFilter').addEventListener('change', filterMovies);
         document.getElementById('yearFilter').addEventListener('change', filterMovies);
-        document.getElementById('countryFilter').addEventListener('change', filterMovies);
         
         // Модальное окно
         const modal = document.getElementById('modal');
@@ -625,7 +558,6 @@
             if (event.target === modal) modal.style.display = 'none';
         };
         
-        // Запуск
         loadMovies();
     </script>
 </body>
