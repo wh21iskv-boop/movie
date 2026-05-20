@@ -210,86 +210,83 @@
     </div>
 
     <script>
-        // ⚠️ ВСТАВЬТЕ ВАШУ ССЫЛКУ СЮДА ⚠️
-        // Как получить ссылку:
-        // 1. Откройте Google Таблицу
-        // 2. Файл → Опубликовать в интернете
-        // 3. Выберите "Весь документ" → формат "CSV"
-        // 4. Скопируйте ссылку и вставьте ниже
-        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv&gid=0&charset=utf-8';
+        // 🔴 ВСТАВЬТЕ ВАШУ ССЫЛКУ СЮДА 🔴
+        // Ссылка должна заканчиваться на: /pub?output=csv
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3Ima7Qye4NmVP1jMRk95erowQHhMDT9srmIFAqq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv';
         
         let allMovies = [];
         let uniqueGenres = new Set();
         
-        // Функция загрузки данных из Google Sheets
         async function loadMovies() {
             const contentDiv = document.getElementById('content');
-            
-            if (GOOGLE_SHEET_CSV_URL === 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ/pub?output=csv&gid=0&charset=utf-8') {
-                contentDiv.innerHTML = `
-                    <div class="error">
-                        ⚠️ Настройка таблицы<br><br>
-                        Добавьте ссылку на вашу Google Таблицу в переменную GOOGLE_SHEET_CSV_URL.<br><br>
-                        <strong>Как получить ссылку:</strong><br>
-                        1. Откройте Google Таблицу<br>
-                        2. Файл → Опубликовать в интернете<br>
-                        3. Выберите формат CSV<br>
-                        4. Скопируйте ссылку
-                    </div>
-                `;
-                return;
-            }
             
             try {
                 console.log('Загрузка данных из:', GOOGLE_SHEET_CSV_URL);
                 
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                // Добавляем параметр для правильной кодировки
+                const url = GOOGLE_SHEET_CSV_URL + '&gid=0';
+                
+                const response = await fetch(url);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
                 }
                 
+                // Получаем текст с правильной кодировкой
                 const csvText = await response.text();
-                console.log('Получено данных:', csvText.length, 'символов');
+                console.log('Получено символов:', csvText.length);
+                
+                if (csvText.length < 10) {
+                    throw new Error('Файл пустой или слишком маленький');
+                }
                 
                 // Парсим CSV
                 const rows = parseCSV(csvText);
+                console.log('Найдено строк:', rows.length);
                 
                 if (rows.length < 2) {
-                    throw new Error('Таблица пуста или имеет неправильный формат');
+                    throw new Error('Нет данных. Убедитесь, что первая строка - заголовки');
                 }
                 
-                // Предполагаем, что первая строка - заголовки
+                // Заголовки (первая строка)
                 const headers = rows[0].map(h => h.toLowerCase().trim());
+                console.log('Заголовки:', headers);
                 
-                // Определяем колонки (поддержка русских и английских названий)
-                const titleCol = findColumn(headers, ['название', 'title', 'фильм', 'movie', 'наименование', 'name']);
-                const genreCol = findColumn(headers, ['жанр', 'genre', 'категория', 'category']);
-                const actorsCol = findColumn(headers, ['актеры', 'actors', 'актёры', 'actor', 'звезды', 'stars']);
-                const posterCol = findColumn(headers, ['постер', 'poster', 'картинка', 'image', 'url', 'ссылка']);
+                // Определяем колонки
+                const titleIndex = findColumnIndex(headers, ['название', 'title', 'фильм', 'name']);
+                const genreIndex = findColumnIndex(headers, ['жанр', 'genre']);
+                const actorsIndex = findColumnIndex(headers, ['актеры', 'actors', 'актёры']);
+                const yearIndex = findColumnIndex(headers, ['год', 'year']);
                 
                 // Преобразуем данные
-                allMovies = rows.slice(1).filter(row => row.length > 0 && row[titleCol]?.trim()).map(row => ({
-                    title: row[titleCol]?.trim() || 'Без названия',
-                    genre: row[genreCol]?.trim() || 'Не указан',
-                    actors: row[actorsCol]?.trim() || 'Не указаны',
-                    poster: row[posterCol]?.trim() || ''
-                }));
+                allMovies = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.length > titleIndex && row[titleIndex] && row[titleIndex].trim()) {
+                        allMovies.push({
+                            title: row[titleIndex]?.trim() || 'Без названия',
+                            genre: row[genreIndex]?.trim() || 'Не указан',
+                            actors: row[actorsIndex]?.trim() || 'Не указаны',
+                            year: row[yearIndex]?.trim() || '',
+                            poster: ''
+                        });
+                    }
+                }
                 
                 console.log('Загружено фильмов:', allMovies.length);
                 
                 if (allMovies.length === 0) {
-                    throw new Error('Не найдено фильмов в таблице');
+                    throw new Error('Не найдено фильмов. Проверьте структуру таблицы');
                 }
                 
-                // Собираем уникальные жанры
+                // Собираем жанры
                 allMovies.forEach(movie => {
-                    movie.genre.split(/[,;]/).forEach(g => {
-                        const genre = g.trim();
-                        if (genre && genre !== 'Не указан') {
-                            uniqueGenres.add(genre);
-                        }
-                    });
+                    if (movie.genre && movie.genre !== 'Не указан') {
+                        movie.genre.split(/[,;]/).forEach(g => {
+                            const genre = g.trim();
+                            if (genre) uniqueGenres.add(genre);
+                        });
+                    }
                 });
                 
                 // Заполняем фильтр жанров
@@ -299,7 +296,6 @@
                     genreSelect.innerHTML += `<option value="${escapeHtml(genre)}">${escapeHtml(genre)}</option>`;
                 });
                 
-                // Отображаем фильмы
                 displayMovies(allMovies);
                 
             } catch (error) {
@@ -309,16 +305,15 @@
                         ❌ Ошибка загрузки данных<br><br>
                         ${escapeHtml(error.message)}<br><br>
                         <strong>Проверьте:</strong><br>
-                        • Правильно ли скопирована ссылка на CSV<br>
-                        • Опубликована ли таблица (Файл → Опубликовать в интернете)<br>
-                        • Есть ли данные в таблице<br>
-                        • Первая строка содержит заголовки (Название, Жанр, Актеры)
+                        • Таблица опубликована (Файл → Опубликовать в интернете)<br>
+                        • Ссылка правильная (должна заканчиваться на /pub?output=csv)<br>
+                        • Первая строка содержит заголовки: Название, Жанр, Актеры<br>
+                        • В таблице есть данные
                     </div>
                 `;
             }
         }
         
-        // Парсинг CSV с поддержкой кавычек и запятых внутри полей
         function parseCSV(csvText) {
             const rows = [];
             let currentRow = [];
@@ -362,16 +357,19 @@
             return rows;
         }
         
-        function findColumn(headers, possibleNames) {
+        function findColumnIndex(headers, possibleNames) {
             for (let i = 0; i < headers.length; i++) {
-                if (possibleNames.some(name => headers[i].includes(name))) {
-                    return i;
+                for (const name of possibleNames) {
+                    if (headers[i].includes(name)) {
+                        return i;
+                    }
                 }
             }
-            return 0; // возвращаем первую колонку если не нашли
+            return 0;
         }
         
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -391,15 +389,13 @@
             const moviesHtml = `
                 <div class="movies-grid">
                     ${movies.map(movie => `
-                        <div class="movie-card" onclick="alert('🎬 ${escapeHtml(movie.title)}\\n\\n📁 Жанр: ${escapeHtml(movie.genre)}\\n\\n⭐ Актеры: ${escapeHtml(movie.actors)}')">
-                            ${movie.poster && movie.poster.startsWith('http') ? 
-                                `<img class="movie-poster" src="${escapeHtml(movie.poster)}" alt="${escapeHtml(movie.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'movie-poster-placeholder\\'>🎬</div>'">` :
-                                `<div class="movie-poster-placeholder">🎬</div>`
-                            }
+                        <div class="movie-card" onclick="alert('🎬 ${escapeHtml(movie.title)}\\n\\n📁 Жанр: ${escapeHtml(movie.genre)}\\n\\n⭐ Актеры: ${escapeHtml(movie.actors)}${movie.year ? '\\n\\n📅 Год: ' + movie.year : ''}')">
+                            <div class="movie-poster-placeholder">🎬</div>
                             <div class="movie-info">
                                 <div class="movie-title">${escapeHtml(movie.title)}</div>
                                 <div class="movie-genre">📁 ${escapeHtml(movie.genre)}</div>
                                 <div class="movie-actors">⭐ ${escapeHtml(movie.actors.length > 100 ? movie.actors.substring(0, 100) + '...' : movie.actors)}</div>
+                                ${movie.year ? `<div class="movie-actors">📅 ${escapeHtml(movie.year)}</div>` : ''}
                             </div>
                         </div>
                     `).join('')}
@@ -414,13 +410,11 @@
             const selectedGenre = document.getElementById('genreFilter').value;
             
             const filtered = allMovies.filter(movie => {
-                // Поиск по названию, жанру, актерам
                 const matchesSearch = !searchTerm || 
                     movie.title.toLowerCase().includes(searchTerm) ||
                     movie.genre.toLowerCase().includes(searchTerm) ||
                     movie.actors.toLowerCase().includes(searchTerm);
                 
-                // Фильтр по жанру
                 let matchesGenre = !selectedGenre;
                 if (selectedGenre && !matchesGenre) {
                     const movieGenres = movie.genre.split(/[,;]/).map(g => g.trim());
@@ -433,7 +427,6 @@
             displayMovies(filtered);
         }
         
-        // Обработчики событий с debounce для поиска
         let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -442,7 +435,6 @@
         
         document.getElementById('genreFilter').addEventListener('change', filterMovies);
         
-        // Запуск при загрузке страницы
         loadMovies();
     </script>
 </body>
