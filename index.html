@@ -494,7 +494,7 @@
                     posterCache = data.posters || {};
                     console.log(`📸 Загружено ${Object.keys(posterCache).length} постеров из кеша`);
                 } else {
-                    console.warn('⚠️ Файл posters.json не найден. Постеры будут отсутствовать.');
+                    console.warn('⚠️ Файл posters.json не найден');
                 }
             } catch(e) {
                 console.error('Ошибка загрузки кеша:', e);
@@ -504,12 +504,15 @@
         // ===== ПОЛУЧЕНИЕ URL ПОСТЕРА ИЗ КЕША =====
         function getPosterUrl(movie) {
             if (!movie) return null;
+            
             const year = extractYear(movie.year);
+            
             // Поиск по русскому названию
             const cacheKey = `${movie.russianTitle}_${year || 'no-year'}`;
             if (posterCache[cacheKey] && posterCache[cacheKey].posterUrl) {
                 return posterCache[cacheKey].posterUrl;
             }
+            
             // Поиск по оригинальному названию
             if (movie.originalTitle) {
                 const altKey = `${movie.originalTitle}_${year || 'no-year'}`;
@@ -517,6 +520,12 @@
                     return posterCache[altKey].posterUrl;
                 }
             }
+            
+            // Поиск без года
+            if (posterCache[movie.russianTitle] && posterCache[movie.russianTitle].posterUrl) {
+                return posterCache[movie.russianTitle].posterUrl;
+            }
+            
             return null;
         }
         
@@ -569,7 +578,6 @@
             if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
             if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
             
-            // Аудио дорожки - КАЖДАЯ С НОВОЙ СТРОКИ
             if (movie.audioInfo && movie.audioInfo.length > 0) {
                 let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
                 let audioItems = Array.isArray(movie.audioInfo) ? movie.audioInfo : [movie.audioInfo];
@@ -582,7 +590,6 @@
                 detailsHtml += audioHtml;
             }
             
-            // Субтитры - КАЖДЫЙ С НОВОЙ СТРОКИ
             if (movie.subtitles && movie.subtitles.length > 0) {
                 let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
                 let subItems = Array.isArray(movie.subtitles) ? movie.subtitles : [movie.subtitles];
@@ -646,7 +653,6 @@
         
         // ===== ЗАГРУЗКА ДАННЫХ ИЗ GOOGLE SHEETS =====
         async function loadMovies() {
-            const contentDiv = document.getElementById('content');
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -684,8 +690,6 @@
                     subtitles: findCol(['Субтитр', 'Субтитры']),
                     yandex: findCol(['Папка на 1Кинопоиск ID', 'Папка на Яндекс', 'Яндекс'])
                 };
-                
-                console.log('Найденные индексы:', idx);
                 
                 allMovies = [];
                 for (let i = 1; i < rows.length; i++) {
@@ -792,15 +796,15 @@
                     else values.sort();
                     values.forEach(v => { 
                         if(v && v !== '—' && v !== '-') {
-                            select.innerHTML += `<option value="${escapeHtml(v)}" style="color: var(--text-primary); background: var(--bg-gradient-start);">${escapeHtml(v.length > 50 ? v.substring(0,50)+'...' : v)}</option>`;
+                            select.innerHTML += `<option value="${escapeHtml(v)}">${escapeHtml(v.length > 50 ? v.substring(0,50)+'...' : v)}</option>`;
                         }
                     });
                 }
                 
-                document.getElementById('genreFilter').innerHTML = '<option value="" style="color: var(--text-primary);">🎭 Все жанры</option>';
-                document.getElementById('yearFilter').innerHTML = '<option value="" style="color: var(--text-primary);">📅 Все годы</option>';
-                document.getElementById('countryFilter').innerHTML = '<option value="" style="color: var(--text-primary);">🌍 Все страны</option>';
-                document.getElementById('actorFilter').innerHTML = '<option value="" style="color: var(--text-primary);">⭐ Все актеры</option>';
+                document.getElementById('genreFilter').innerHTML = '<option value="">🎭 Все жанры</option>';
+                document.getElementById('yearFilter').innerHTML = '<option value="">📅 Все годы</option>';
+                document.getElementById('countryFilter').innerHTML = '<option value="">🌍 Все страны</option>';
+                document.getElementById('actorFilter').innerHTML = '<option value="">⭐ Все актеры</option>';
                 
                 populateFilter('genreFilter', uniqueGenres);
                 populateFilter('yearFilter', uniqueYears, true);
@@ -812,7 +816,7 @@
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                contentDiv.innerHTML = `<div class="error">❌ Ошибка: ${escapeHtml(error.message)}<br><br>Проверьте консоль (F12)</div>`;
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${escapeHtml(error.message)}</div>`;
             }
         }
         
@@ -944,7 +948,6 @@
         document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
         window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
         
-        // ===== ЗАПУСК =====
         loadMovies();
     </script>
 </body>
