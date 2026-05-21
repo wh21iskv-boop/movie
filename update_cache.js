@@ -2,25 +2,16 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 
-// --- НАСТРОЙКИ ---
-// ПРАВИЛЬНЫЙ ID из вашей таблицы
 const SPREADSHEET_ID = '2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ';
-// ---
 
 async function searchKinopoisk(title, year, apiKey) {
-    if (!title) return null;
-    
-    const searchUrl = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(title)}`;
+    if (!title || title.length < 2) return null;
     
     try {
-        const response = await fetch(searchUrl, {
-            headers: { 'X-API-KEY': apiKey }
-        });
+        const searchUrl = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(title)}`;
+        const response = await fetch(searchUrl, { headers: { 'X-API-KEY': apiKey } });
         
-        if (!response.ok) {
-            console.warn(`API Error for "${title}": ${response.status}`);
-            return null;
-        }
+        if (!response.ok) return null;
         
         const data = await response.json();
         
@@ -30,18 +21,15 @@ async function searchKinopoisk(title, year, apiKey) {
                 const exactMatch = data.films.find(f => f.year === parseInt(year));
                 if (exactMatch) film = exactMatch;
             }
-            
             return {
                 id: film.filmId,
                 posterUrl: film.posterUrlPreview || film.posterUrl || null,
-                nameRu: film.nameRu,
-                nameEn: film.nameEn,
                 rating: film.rating
             };
         }
         return null;
     } catch (error) {
-        console.error(`Search error for "${title}":`, error.message);
+        console.log(`   ⚠️ Ошибка: ${error.message}`);
         return null;
     }
 }
@@ -50,7 +38,7 @@ async function updateCache() {
     console.log("🔄 Начинаю обновление кеша постеров...");
     const apiKey = process.env.KINOPOISK_API_KEY;
     if (!apiKey) {
-        console.error("❌ Ошибка: API-ключ KINOPOISK_API_KEY не найден в переменных окружения.");
+        console.error("❌ API-ключ не найден!");
         process.exit(1);
     }
 
@@ -58,76 +46,110 @@ async function updateCache() {
     try {
         const cacheContent = fs.readFileSync('posters.json', 'utf8');
         cache = JSON.parse(cacheContent);
-        console.log(`📦 Загружен текущий кеш. Содержит ${Object.keys(cache.posters).length} записей.`);
+        console.log(`📦 В кеше уже ${Object.keys(cache.posters).length} постеров`);
     } catch(e) {
-        console.log("⚠️ Файл кеша не найден или поврежден. Будет создан новый.");
+        console.log("📦 Создаю новый кеш");
     }
 
     const csvUrl = `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?output=csv`;
-    console.log(`📥 Загружаю таблицу: ${csvUrl}`);
+    console.log(`📥 Загружаю таблицу...`);
+    
     const response = await fetch(csvUrl);
     if (!response.ok) {
-        console.error(`❌ Не удалось загрузить таблицу: ${response.status}`);
+        console.error(`❌ Ошибка загрузки: ${response.status}`);
         process.exit(1);
     }
+    
     const csvText = await response.text();
-    const rows = csvText.split('\n').map(row => row.split(','));
-    if (rows.length < 2) {
-        console.error("❌ Таблица пуста или имеет неверный формат.");
+    const lines = csvText.split('\n');
+    console.log(`📊 Всего строк: ${lines.length}`);
+    
+    if (lines.length < 2) {
+        console.error("❌ Таблица пуста");
         process.exit(1);
     }
-
-    const headers = rows[0].map(h => h.trim());
-    const titleIndex = headers.findIndex(h => h.includes('Русское название'));
-    const originalIndex = headers.findIndex(h => h.includes('Оригинальное название'));
-    const yearIndex = headers.findIndex(h => h.includes('Год выпуска'));
-
-    console.log(`🔍 Найдено строк в таблице: ${rows.length - 1}`);
-    console.log(`📌 Колонка названия: ${titleIndex}, года: ${yearIndex}`);
-
+    
+    // Парсим CSV правильно (с учётом кавычек)
+    function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    }
+    
+    const headers = parseCSVLine(lines[0]);
+    console.log(`📌 Заголовки колонок:`);
+    headers.forEach((h, i) => console.log(`   ${i}: "${h}"`));
+    
+    const titleIndex = headers.findIndex(h => h && (h.includes('Русское название') || h.includes('Название русское')));
+    const originalIndex = headers.findIndex(h => h && (h.includes('Оригинальное название') || h.includes('Оригинал')));
+    const yearIndex = headers.findIndex(h => h && (h.includes('Год выпуска') || h.includes('Год')));
+    
+    console.log(`📍 Индексы: Название=${titleIndex}, Оригинал=${originalIndex}, Год=${yearIndex}`);
+    
+    if (titleIndex === -1 && originalIndex === -1) {
+        console.error("❌ Не найдена колонка с названием фильма!");
+        process.exit(1);
+    }
+    
     let newCount = 0;
-    for (let i = 1; i < rows.length; i++) {
-        const cols = rows[i];
-        const russianTitle = cols[titleIndex]?.trim();
-        let title = russianTitle;
+    let processed = 0;
+    
+    for (let i = 1; i < lines.length && i < 50; i++) { // Ограничим 50 для теста
+        const line = lines[i].trim();
+        if (!line) continue;
         
-        if (!title || title === '—') {
-            const originalTitle = cols[originalIndex]?.trim();
-            if (originalTitle && originalTitle !== '—') title = originalTitle;
+        const cols = parseCSVLine(line);
+        let title = titleIndex !== -1 && cols[titleIndex] ? cols[titleIndex].replace(/^"|"$/g, '').trim() : '';
+        
+        if (!title && originalIndex !== -1 && cols[originalIndex]) {
+            title = cols[originalIndex].replace(/^"|"$/g, '').trim();
         }
         
-        if (!title) continue;
+        if (!title || title === '—' || title === '-') continue;
         
-        const yearMatch = cols[yearIndex]?.match(/\d{4}/);
-        const year = yearMatch ? yearMatch[0] : null;
+        let year = '';
+        if (yearIndex !== -1 && cols[yearIndex]) {
+            const yearMatch = cols[yearIndex].match(/\d{4}/);
+            if (yearMatch) year = yearMatch[0];
+        }
         
+        processed++;
         const cacheKey = `${title}_${year || 'no-year'}`;
         
         if (cache.posters[cacheKey]) {
             continue;
         }
         
-        console.log(`🔍 [${i}/${rows.length-1}] Ищу: "${title}" (${year || 'год не указан'})`);
-        const kinopoiskData = await searchKinopoisk(title, year, apiKey);
+        console.log(`🔍 [${processed}] "${title}" (${year || '?'})`);
+        const data = await searchKinopoisk(title, year, apiKey);
         
-        if (kinopoiskData && kinopoiskData.posterUrl) {
-            cache.posters[cacheKey] = kinopoiskData;
-            console.log(`   ✅ Найден! Постер: ${kinopoiskData.posterUrl.substring(0, 60)}...`);
+        if (data && data.posterUrl) {
+            cache.posters[cacheKey] = data;
+            console.log(`   ✅ Постер найден!`);
             newCount++;
         } else {
-            console.log(`   ❌ Не найден.`);
+            console.log(`   ❌ Постер не найден`);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
-
+    
     cache.lastUpdated = new Date().toISOString();
     fs.writeFileSync('posters.json', JSON.stringify(cache, null, 2));
-    console.log(`\n✅ Готово! Добавлено ${newCount} новых постеров. Всего записей: ${Object.keys(cache.posters).length}.`);
-    console.log(`🕒 Последнее обновление: ${cache.lastUpdated}`);
+    console.log(`\n✅ Готово! Обработано ${processed}, добавлено ${newCount}, всего в кеше ${Object.keys(cache.posters).length}`);
 }
 
-updateCache().catch(err => {
-    console.error("❌ Критическая ошибка:", err);
-    process.exit(1);
-});
+updateCache();
