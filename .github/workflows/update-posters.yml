@@ -16,12 +16,12 @@ jobs:
     - name: Устанавливаем Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         
     - name: Устанавливаем зависимости
       run: |
         npm init -y
-        npm install node-fetch@2
+        npm install node-fetch@3
       
     - name: Запускаем скрипт обновления кеша
       env:
@@ -33,5 +33,5 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "actions@github.com"
         git add posters.json
-        git diff --cached --quiet || git commit -m "🤖 Автоматическое обновление кеша постеров"
+        git commit -m "🤖 Автоматическое обновление кеша постеров" || echo "Нет изменений"
         git push
