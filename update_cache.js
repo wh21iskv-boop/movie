@@ -1,4 +1,5 @@
 const fs = require('fs');
+const axios = require('axios');
 
 const SPREADSHEET_ID = '2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ';
 
@@ -7,18 +8,15 @@ async function searchKinopoisk(title, apiKey) {
     
     try {
         const url = `https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(title)}`;
-        const res = await fetch(url, { 
-            headers: { 'X-API-KEY': apiKey } 
+        const response = await axios.get(url, {
+            headers: { 'X-API-KEY': apiKey }
         });
         
-        if (!res.ok) return null;
-        
-        const data = await res.json();
-        if (data.films && data.films[0]) {
+        if (response.data && response.data.films && response.data.films[0]) {
             return {
-                id: data.films[0].filmId,
-                posterUrl: data.films[0].posterUrlPreview || data.films[0].posterUrl,
-                rating: data.films[0].rating
+                id: response.data.films[0].filmId,
+                posterUrl: response.data.films[0].posterUrlPreview || response.data.films[0].posterUrl,
+                rating: response.data.films[0].rating
             };
         }
         return null;
@@ -48,26 +46,17 @@ async function updateCache() {
     const csvUrl = `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?output=csv`;
     console.log(`📥 Загружаю таблицу: ${csvUrl}`);
     
-    const response = await fetch(csvUrl);
-    if (!response.ok) {
-        console.error(`❌ Не удалось загрузить таблицу: ${response.status}`);
-        process.exit(1);
-    }
-    
-    const csvText = await response.text();
+    const csvResponse = await axios.get(csvUrl);
+    const csvText = csvResponse.data;
     const lines = csvText.split('\n');
     console.log(`📊 Всего строк в таблице: ${lines.length}`);
     
-    // Парсим заголовки
-    const headers = lines[0].split(',');
-    console.log(`📌 Заголовки: ${headers.slice(0, 5).join(', ')}...`);
-    
+    // Простой парсинг CSV
     const movies = [];
-    for (let i = 1; i < lines.length && i < 100; i++) { // сначала 100 фильмов для теста
+    for (let i = 1; i < lines.length && i < 50; i++) { // сначала 50 для теста
         const line = lines[i];
         if (!line.trim()) continue;
         
-        // Простой парсинг CSV
         const parts = [];
         let current = '';
         let inQuotes = false;
@@ -84,7 +73,6 @@ async function updateCache() {
         }
         parts.push(current);
         
-        // Колонки: 0 - Год, 1 - Оригинальное, 2 - Русское
         const russianTitle = parts[2]?.replace(/^"|"$/g, '').trim();
         const originalTitle = parts[1]?.replace(/^"|"$/g, '').trim();
         const title = russianTitle || originalTitle;
@@ -100,16 +88,7 @@ async function updateCache() {
     for (let i = 0; i < movies.length; i++) {
         const title = movies[i];
         
-        // Проверяем, есть ли уже в кеше
-        let found = false;
-        for (const key in cache.posters) {
-            if (key === title) {
-                found = true;
-                break;
-            }
-        }
-        
-        if (found) {
+        if (cache.posters[title]) {
             console.log(`⏭️ [${i+1}/${movies.length}] Уже есть: ${title}`);
             continue;
         }
@@ -125,7 +104,6 @@ async function updateCache() {
             console.log(`   ❌ Не найден`);
         }
         
-        // Ждём между запросами
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
