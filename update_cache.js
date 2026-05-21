@@ -2,14 +2,11 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 
-// --- НАСТРОЙКИ (измените под себя) ---
-// ID из ссылки на вашу ОПУБЛИКОВАННУЮ таблицу:
-// Пример: https://docs.google.com/spreadsheets/d/e/2PACX-1vT3Ima7.../pub?output=csv
+// --- НАСТРОЙКИ ---
+// ПРАВИЛЬНЫЙ ID из вашей таблицы
 const SPREADSHEET_ID = '2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ';
-// Ваш API-ключ будет передан через переменную окружения KINOPOISK_API_KEY
 // ---
 
-// Функция для поиска фильма по названию и году через Kinopoisk API
 async function searchKinopoisk(title, year, apiKey) {
     if (!title) return null;
     
@@ -29,7 +26,6 @@ async function searchKinopoisk(title, year, apiKey) {
         
         if (data.films && data.films.length > 0) {
             let film = data.films[0];
-            // Ищем точное совпадение по году, если он указан
             if (year) {
                 const exactMatch = data.films.find(f => f.year === parseInt(year));
                 if (exactMatch) film = exactMatch;
@@ -50,7 +46,6 @@ async function searchKinopoisk(title, year, apiKey) {
     }
 }
 
-// Основная функция обновления кеша
 async function updateCache() {
     console.log("🔄 Начинаю обновление кеша постеров...");
     const apiKey = process.env.KINOPOISK_API_KEY;
@@ -59,7 +54,6 @@ async function updateCache() {
         process.exit(1);
     }
 
-    // 1. Загружаем текущий кеш из файла
     let cache = { lastUpdated: null, posters: {} };
     try {
         const cacheContent = fs.readFileSync('posters.json', 'utf8');
@@ -69,7 +63,6 @@ async function updateCache() {
         console.log("⚠️ Файл кеша не найден или поврежден. Будет создан новый.");
     }
 
-    // 2. Загружаем данные из Google Sheets
     const csvUrl = `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?output=csv`;
     console.log(`📥 Загружаю таблицу: ${csvUrl}`);
     const response = await fetch(csvUrl);
@@ -85,35 +78,36 @@ async function updateCache() {
     }
 
     const headers = rows[0].map(h => h.trim());
-    // Находим индексы нужных колонок (адаптируйте под названия в вашей таблице)
     const titleIndex = headers.findIndex(h => h.includes('Русское название'));
     const originalIndex = headers.findIndex(h => h.includes('Оригинальное название'));
     const yearIndex = headers.findIndex(h => h.includes('Год выпуска'));
 
     console.log(`🔍 Найдено строк в таблице: ${rows.length - 1}`);
+    console.log(`📌 Колонка названия: ${titleIndex}, года: ${yearIndex}`);
 
-    // 3. Обрабатываем каждую строку таблицы
     let newCount = 0;
     for (let i = 1; i < rows.length; i++) {
         const cols = rows[i];
         const russianTitle = cols[titleIndex]?.trim();
         let title = russianTitle;
-        let originalTitle = cols[originalIndex]?.trim();
         
-        if (!title && originalTitle) title = originalTitle;
-        if (!title || title === '—') continue;
+        if (!title || title === '—') {
+            const originalTitle = cols[originalIndex]?.trim();
+            if (originalTitle && originalTitle !== '—') title = originalTitle;
+        }
+        
+        if (!title) continue;
         
         const yearMatch = cols[yearIndex]?.match(/\d{4}/);
         const year = yearMatch ? yearMatch[0] : null;
         
         const cacheKey = `${title}_${year || 'no-year'}`;
         
-        // Если уже есть в кеше — пропускаем
         if (cache.posters[cacheKey]) {
             continue;
         }
         
-        console.log(`🔍 Ищу: "${title}" (${year || 'год не указан'})`);
+        console.log(`🔍 [${i}/${rows.length-1}] Ищу: "${title}" (${year || 'год не указан'})`);
         const kinopoiskData = await searchKinopoisk(title, year, apiKey);
         
         if (kinopoiskData && kinopoiskData.posterUrl) {
@@ -124,18 +118,15 @@ async function updateCache() {
             console.log(`   ❌ Не найден.`);
         }
         
-        // Задержка, чтобы не превысить лимит API (500/день)
         await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // 4. Сохраняем обновленный кеш обратно в файл
     cache.lastUpdated = new Date().toISOString();
     fs.writeFileSync('posters.json', JSON.stringify(cache, null, 2));
     console.log(`\n✅ Готово! Добавлено ${newCount} новых постеров. Всего записей: ${Object.keys(cache.posters).length}.`);
     console.log(`🕒 Последнее обновление: ${cache.lastUpdated}`);
 }
 
-// Запускаем скрипт
 updateCache().catch(err => {
     console.error("❌ Критическая ошибка:", err);
     process.exit(1);
