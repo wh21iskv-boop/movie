@@ -16,7 +16,10 @@ jobs:
     - name: Устанавливаем Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '18'
+        
+    - name: Устанавливаем axios
+      run: npm install axios
       
     - name: Запускаем скрипт обновления кеша
       env:
