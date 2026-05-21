@@ -17,11 +17,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        
-    - name: Устанавливаем зависимости
-      run: |
-        npm init -y
-        npm install node-fetch@3
       
     - name: Запускаем скрипт обновления кеша
       env:
