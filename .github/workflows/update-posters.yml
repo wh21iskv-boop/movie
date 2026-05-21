@@ -2,9 +2,7 @@ name: Ежедневное обновление кеша постеров
 
 on:
   schedule:
-    # Запуск каждый день в 03:00 по UTC (06:00 МСК)
     - cron: '0 3 * * *'
-  # Возможность запустить вручную из интерфейса GitHub
   workflow_dispatch:
 
 jobs:
@@ -18,10 +16,12 @@ jobs:
     - name: Устанавливаем Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '18'
         
     - name: Устанавливаем зависимости
-      run: npm install node-fetch
+      run: |
+        npm init -y
+        npm install node-fetch@2
       
     - name: Запускаем скрипт обновления кеша
       env:
@@ -33,5 +33,5 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "actions@github.com"
         git add posters.json
-        git commit -m "🤖 Автоматическое обновление кеша постеров" || echo "Нет изменений для сохранения"
+        git diff --cached --quiet || git commit -m "🤖 Автоматическое обновление кеша постеров"
         git push
