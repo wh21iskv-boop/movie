@@ -51,9 +51,8 @@ async function updateCache() {
     const lines = csvText.split('\n');
     console.log(`📊 Всего строк в таблице: ${lines.length}`);
     
-    // Простой парсинг CSV
     const movies = [];
-    for (let i = 1; i < lines.length && i < 50; i++) { // сначала 50 для теста
+    for (let i = 1; i < lines.length && i < 50; i++) {
         const line = lines[i];
         if (!line.trim()) continue;
         
