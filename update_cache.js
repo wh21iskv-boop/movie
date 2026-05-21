@@ -1,5 +1,4 @@
 const fs = require('fs');
-const fetch = require('node-fetch');
 
 const SPREADSHEET_ID = '2PACX-1vTJT3Ima7Qye4NmVPljMRk95erowQHWMDT9srmIFaQq-ErrUc3aAEyfhnE8rKmEhfjrc3xi96bqGcCJ';
 
@@ -59,12 +58,33 @@ async function updateCache() {
     const lines = csvText.split('\n');
     console.log(`📊 Всего строк в таблице: ${lines.length}`);
     
+    // Парсим заголовки
+    const headers = lines[0].split(',');
+    console.log(`📌 Заголовки: ${headers.slice(0, 5).join(', ')}...`);
+    
     const movies = [];
-    for (let i = 1; i < lines.length && i < 50; i++) { // сначала только 50 фильмов для теста
+    for (let i = 1; i < lines.length && i < 100; i++) { // сначала 100 фильмов для теста
         const line = lines[i];
         if (!line.trim()) continue;
         
-        const parts = line.split(',');
+        // Простой парсинг CSV
+        const parts = [];
+        let current = '';
+        let inQuotes = false;
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                parts.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        parts.push(current);
+        
+        // Колонки: 0 - Год, 1 - Оригинальное, 2 - Русское
         const russianTitle = parts[2]?.replace(/^"|"$/g, '').trim();
         const originalTitle = parts[1]?.replace(/^"|"$/g, '').trim();
         const title = russianTitle || originalTitle;
@@ -80,7 +100,16 @@ async function updateCache() {
     for (let i = 0; i < movies.length; i++) {
         const title = movies[i];
         
-        if (cache.posters[title]) {
+        // Проверяем, есть ли уже в кеше
+        let found = false;
+        for (const key in cache.posters) {
+            if (key === title) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
             console.log(`⏭️ [${i+1}/${movies.length}] Уже есть: ${title}`);
             continue;
         }
@@ -96,6 +125,7 @@ async function updateCache() {
             console.log(`   ❌ Не найден`);
         }
         
+        // Ждём между запросами
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
