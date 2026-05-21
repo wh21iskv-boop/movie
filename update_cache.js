@@ -51,8 +51,9 @@ async function updateCache() {
     const lines = csvText.split('\n');
     console.log(`📊 Всего строк в таблице: ${lines.length}`);
     
+    // Парсим все фильмы
     const movies = [];
-    for (let i = 1; i < lines.length && i < 50; i++) {
+    for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         if (!line.trim()) continue;
         
@@ -81,34 +82,58 @@ async function updateCache() {
         }
     }
     
-    console.log(`🎬 Будет обработано фильмов: ${movies.length}`);
+    console.log(`🎬 Всего фильмов для обработки: ${movies.length}`);
     
     let newCount = 0;
+    let skippedCount = 0;
+    let dailyLimit = 0;
+    
     for (let i = 0; i < movies.length; i++) {
         const title = movies[i];
         
-        if (cache.posters[title]) {
-            console.log(`⏭️ [${i+1}/${movies.length}] Уже есть: ${title}`);
+        // Проверяем, есть ли уже в кеше
+        let found = false;
+        for (const key in cache.posters) {
+            if (key === title) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (found) {
+            skippedCount++;
             continue;
+        }
+        
+        // Ограничиваем 500 запросами в сутки
+        if (dailyLimit >= 500) {
+            console.log(`\n⚠️ Достигнут лимит 500 запросов в сутки. Остановлено на ${i} фильме.`);
+            console.log(`Завтра скрипт продолжит с того же места.`);
+            break;
         }
         
         console.log(`🔍 [${i+1}/${movies.length}] Ищу: ${title}`);
         const data = await searchKinopoisk(title, apiKey);
+        dailyLimit++;
         
         if (data && data.posterUrl) {
             cache.posters[title] = data;
-            console.log(`   ✅ Найден!`);
+            console.log(`   ✅ Найден! (${dailyLimit}/500 сегодня)`);
             newCount++;
         } else {
-            console.log(`   ❌ Не найден`);
+            console.log(`   ❌ Не найден (${dailyLimit}/500 сегодня)`);
         }
         
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Ждём между запросами
+        await new Promise(resolve => setTimeout(resolve, 300));
     }
     
     cache.lastUpdated = new Date().toISOString();
     fs.writeFileSync('posters.json', JSON.stringify(cache, null, 2));
-    console.log(`\n✅ Готово! Добавлено ${newCount} новых постеров. Всего: ${Object.keys(cache.posters).length}`);
+    console.log(`\n✅ Готово!`);
+    console.log(`   - Пропущено (уже в кеше): ${skippedCount}`);
+    console.log(`   - Добавлено новых: ${newCount}`);
+    console.log(`   - Всего в кеше: ${Object.keys(cache.posters).length}`);
 }
 
 updateCache().catch(err => {
