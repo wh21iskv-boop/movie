@@ -23,6 +23,28 @@ function parseCSVLine(line) {
     return result.map(field => field.replace(/^"|"$/g, '').trim());
 }
 
+// Проверка, является ли строка названием фильма (не мусором)
+function isValidMovieTitle(title) {
+    if (!title) return false;
+    if (title.length < 2) return false;
+    if (title === '—' || title === '-') return false;
+    
+    // Мусорные паттерны
+    const garbagePatterns = [
+        /кбит\/с/i, /TRACK_/i, /kbps/i, /H264/i, /AC3/i, 
+        /subrip/i, /Аудио/i, /DTS/i, /AAC/i, /стерео/i,
+        /MVO/i, /AVO/i, /DVO/i, /оригинал/i, /Original/i,
+        /\.avi$/i, /\.mkv$/i, /\.mp4$/i, /Prestige/i,
+        /Kultura/i, /Фильм-экспорт/i, /ТВ-/i, /Film/i
+    ];
+    
+    for (const pattern of garbagePatterns) {
+        if (pattern.test(title)) return false;
+    }
+    
+    return true;
+}
+
 async function buildMoviesCache() {
     console.log("🔄 Построение кеша фильмов...");
     
@@ -34,18 +56,25 @@ async function buildMoviesCache() {
         posters = postersData.posters || {};
         console.log(`📸 Загружено ${Object.keys(posters).length} постеров`);
     } catch(e) {
-        console.log("📸 Постеры не найдены");
+        console.log("📸 Постеры не найдены, будут созданы позже");
     }
     
     // Загружаем таблицу
     const csvUrl = `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?output=csv`;
-    console.log(`📥 Загружаю таблицу...`);
+    console.log(`📥 Загружаю таблицу: ${csvUrl}`);
     
     const csvResponse = await axios.get(csvUrl);
     const lines = csvResponse.data.split('\n');
+    console.log(`📊 Всего строк: ${lines.length}`);
     
     const headers = parseCSVLine(lines[0]);
-    const idx = {
+    console.log(`📌 Заголовки колонок:`);
+    headers.forEach((h, i) => {
+        if (h && h.length > 0) console.log(`   ${i}: "${h}"`);
+    });
+    
+    // Находим индексы всех нужных колонок (по вашим названиям)
+    const colIndex = {
         year: headers.findIndex(h => h && (h.includes('Год выпуска') || h.includes('Год'))),
         originalTitle: headers.findIndex(h => h && (h.includes('Оригинальное название') || h.includes('Оригинал'))),
         russianTitle: headers.findIndex(h => h && (h.includes('Русское название') || h.includes('Название русское'))),
@@ -57,63 +86,88 @@ async function buildMoviesCache() {
         actors: headers.findIndex(h => h && (h.includes('Актерский состав') || h.includes('Актеры'))),
         country: headers.findIndex(h => h && h.includes('Страна')),
         director: headers.findIndex(h => h && (h.includes('Режиссер') || h.includes('Режиссёр'))),
-        duration: headers.findIndex(h => h && (h.includes('Длительность чел/мес') || h.includes('Длительность'))),
-        resolution: headers.findIndex(h => h && h.includes('Разрешение'))
+        duration: headers.findIndex(h => h && (h.includes('Длительность') || h.includes('Длительность чел/мес'))),
+        size: headers.findIndex(h => h && h.includes('Размер (ГБ)')),
+        resolution: headers.findIndex(h => h && h.includes('Разрешение')),
+        audio: headers.findIndex(h => h && (h.includes('Аудио информация') || h.includes('Аудио'))),
+        subtitles: headers.findIndex(h => h && (h.includes('Субтитр') || h.includes('Субтитры'))),
+        fileName: headers.findIndex(h => h && (h.includes('Имя файла') || h.includes('Инв. файла'))),
+        yandexFolder: headers.findIndex(h => h && (h.includes('Папка на Яндекс') || h.includes('Яндекс')))
     };
     
-    console.log(`📌 Индексы:`, idx);
+    console.log(`📍 Найденные индексы:`, colIndex);
     
     const movies = [];
+    let skippedCount = 0;
+    
     for (let i = 1; i < lines.length; i++) {
         const parts = parseCSVLine(lines[i]);
         if (parts.length === 0) continue;
         
-        const getVal = (i) => i !== -1 && i < parts.length ? parts[i] : '';
+        const getVal = (idx) => idx !== -1 && idx < parts.length ? parts[idx] : '';
         
-        let russianTitle = getVal(idx.russianTitle);
-        let originalTitle = getVal(idx.originalTitle);
+        const russianTitle = getVal(colIndex.russianTitle);
+        const originalTitle = getVal(colIndex.originalTitle);
         
-        if (!russianTitle && originalTitle) {
-            russianTitle = originalTitle;
-            originalTitle = '';
+        // Проверяем, что это реальный фильм
+        const title = russianTitle || originalTitle;
+        if (!isValidMovieTitle(title)) {
+            skippedCount++;
+            continue;
         }
         
-        if (!russianTitle || russianTitle === '—' || russianTitle === '-') continue;
+        // Получаем год
+        let year = getVal(colIndex.year);
+        const yearMatch = year.match(/\d{4}/);
+        year = yearMatch ? yearMatch[0] : '';
         
         // Очищаем рейтинги
-        let ratingKP = getVal(idx.ratingKP);
+        let ratingKP = getVal(colIndex.ratingKP);
         if (ratingKP && (ratingKP.includes('kinopoisk') || ratingKP.includes('http'))) {
             const match = ratingKP.match(/(\d+[,.]?\d*)/);
             ratingKP = match ? match[1].replace(',', '.') : '';
         }
+        if (ratingKP === '—' || ratingKP === '-') ratingKP = '';
         
-        let ratingIMDb = getVal(idx.ratingIMDb);
+        let ratingIMDb = getVal(colIndex.ratingIMDb);
         if (ratingIMDb && ratingIMDb.includes('http')) {
             const match = ratingIMDb.match(/(\d+[,.]?\d*)/);
             ratingIMDb = match ? match[1].replace(',', '.') : '';
         }
+        if (ratingIMDb === '—' || ratingIMDb === '-') ratingIMDb = '';
+        
+        // Получаем аудио (сохраняем как есть, без разбивки)
+        let audioInfo = getVal(colIndex.audio);
+        if (audioInfo === '—' || audioInfo === '-') audioInfo = '';
+        
+        // Получаем субтитры
+        let subtitles = getVal(colIndex.subtitles);
+        if (subtitles === '—' || subtitles === '-') subtitles = '';
         
         // Получаем постер из кеша
-        const year = getVal(idx.year);
-        const yearMatch = year.match(/\d{4}/);
-        const cacheKey = `${russianTitle}_${yearMatch ? yearMatch[0] : 'no-year'}`;
+        const cacheKey = `${title}_${year || 'no-year'}`;
         const posterData = posters[cacheKey];
         
         movies.push({
             id: i,
-            title: russianTitle,
-            originalTitle: originalTitle,
-            year: yearMatch ? yearMatch[0] : '',
-            genre: getVal(idx.genre),
-            description: getVal(idx.description),
-            kinopoiskLink: getVal(idx.kinopoiskLink),
+            title: title,
+            originalTitle: originalTitle || '',
+            year: year,
+            genre: getVal(colIndex.genre) || '',
+            description: getVal(colIndex.description) || '',
+            kinopoiskLink: getVal(colIndex.kinopoiskLink) || '',
             ratingKP: ratingKP,
             ratingIMDb: ratingIMDb,
-            actors: getVal(idx.actors),
-            country: getVal(idx.country),
-            director: getVal(idx.director),
-            duration: getVal(idx.duration),
-            resolution: getVal(idx.resolution),
+            actors: getVal(colIndex.actors) || '',
+            country: getVal(colIndex.country) || '',
+            director: getVal(colIndex.director) || '',
+            duration: getVal(colIndex.duration) || '',
+            size: getVal(colIndex.size) || '',
+            resolution: getVal(colIndex.resolution) || '',
+            audioInfo: audioInfo,
+            subtitles: subtitles,
+            fileName: getVal(colIndex.fileName) || '',
+            yandexFolder: getVal(colIndex.yandexFolder) || '',
             posterUrl: posterData ? posterData.posterUrl : null
         });
     }
@@ -126,7 +180,10 @@ async function buildMoviesCache() {
     };
     
     fs.writeFileSync('movies.json', JSON.stringify(output, null, 2));
-    console.log(`✅ Готово! Сохранено ${movies.length} фильмов в movies.json`);
+    console.log(`\n✅ Результат:`);
+    console.log(`   - Пропущено мусорных строк: ${skippedCount}`);
+    console.log(`   - Сохранено фильмов: ${movies.length}`);
+    console.log(`   - Файл: movies.json`);
     console.log(`🕒 Последнее обновление: ${output.lastUpdated}`);
 }
 
