@@ -1,44 +1,8 @@
-name: Ежедневное обновление кеша постеров
-
-on:
-  schedule:
-    - cron: '0 3 * * *'
-  workflow_dispatch:
-
-jobs:
-  update-posters:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Клонируем репозиторий
-      uses: actions/checkout@v4
-      
-    - name: Устанавливаем Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Устанавливаем axios
-      run: npm install axios
-      
-    - name: Запускаем скрипт обновления кеша
-      env:
-        KINOPOISK_API_KEY: ${{ secrets.KINOPOISK_API_KEY }}
-      run: node update_cache.js
-      
-    - name: Сохраняем изменения в репозитории
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "actions@github.com"
-        git add posters.json
-        git commit -m "🤖 Автоматическое обновление кеша постеров" || echo "Нет изменений"
-        git push
-
 name: Обновление данных каталога
 
 on:
   schedule:
-    - cron: '0 */3 * * *'  # Каждые 3 часа
+    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 jobs:
@@ -57,12 +21,12 @@ jobs:
     - name: Устанавливаем зависимости
       run: npm install axios
       
-    - name: Обновляем постеры (если есть лимит)
+    - name: Обновляем постеры
       env:
         KINOPOISK_API_KEY: ${{ secrets.KINOPOISK_API_KEY }}
       run: node update_cache.js
       
-    - name: Строим movies.json из таблицы
+    - name: Строим movies.json
       run: node build_cache.js
       
     - name: Сохраняем изменения
@@ -70,5 +34,5 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "actions@github.com"
         git add movies.json posters.json
-        git commit -m "🤖 Автообновление каталога $(date +'%Y-%m-%d %H:%M')" || echo "Нет изменений"
+        git commit -m "🤖 Автообновление каталога" || echo "Нет изменений"
         git push
