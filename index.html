@@ -514,7 +514,7 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
         
-        // ===== ПОКАЗ ДЕТАЛЕЙ ФИЛЬМА =====
+        // ===== ПОКАЗ ДЕТАЛЕЙ ФИЛЬМА =====        
         window.showMovieDetails = function(index) {
             const movie = allMovies[index];
             if (!movie) return;
@@ -526,12 +526,16 @@
             if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
                 links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
             }
+            if (movie.yandexFolder && movie.yandexFolder.startsWith('http')) {
+                links += `<a href="${escapeHtml(movie.yandexFolder)}" target="_blank" class="modal-link">📁 Яндекс папка</a>`;
+            }
             
             let rating = '';
             if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
             if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
             
             let detailsHtml = `<h3>${escapeHtml(movie.title)}</h3>`;
+            
             if (movie.originalTitle && movie.originalTitle !== movie.title) {
                 detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
             }
@@ -542,8 +546,39 @@
             if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
             if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
             if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
+            
+            // Технические детали
             if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
             if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
+            if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
+            if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
+            
+            // Аудио дорожки (с новой строки)
+            if (movie.audioInfo && movie.audioInfo !== '—' && movie.audioInfo !== '') {
+                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
+                // Разбиваем на строки, если есть разделители
+                let audioLines = movie.audioInfo.split(/(?=Аудио #\d+)|(?:\n)/);
+                for (const audio of audioLines) {
+                    if (audio && audio.trim() && audio !== '—') {
+                        audioHtml += `<div class="audio-line">🎧 ${escapeHtml(audio.trim())}</div>`;
+                    }
+                }
+                audioHtml += '</div>';
+                detailsHtml += audioHtml;
+            }
+            
+            // Субтитры (с новой строки)
+            if (movie.subtitles && movie.subtitles !== '—' && movie.subtitles !== '') {
+                let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+                let subLines = movie.subtitles.split(/[,;]/);
+                for (const sub of subLines) {
+                    if (sub && sub.trim() && sub !== '—') {
+                        subsHtml += `<div class="subtitle-line">📄 ${escapeHtml(sub.trim())}</div>`;
+                    }
+                }
+                subsHtml += '</div>';
+                detailsHtml += subsHtml;
+            }
             
             if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
             
