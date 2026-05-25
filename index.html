@@ -547,16 +547,14 @@
             if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
             if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
             
-            // Технические детали
             if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
             if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
             if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
             if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
             
-            // Аудио дорожки (с новой строки)
+            // Аудио дорожки
             if (movie.audioInfo && movie.audioInfo !== '—' && movie.audioInfo !== '') {
                 let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио дорожки:</span><br>';
-                // Разбиваем на строки, если есть разделители
                 let audioLines = movie.audioInfo.split(/(?=Аудио #\d+)|(?:\n)/);
                 for (const audio of audioLines) {
                     if (audio && audio.trim() && audio !== '—') {
@@ -567,7 +565,7 @@
                 detailsHtml += audioHtml;
             }
             
-            // Субтитры (с новой строки)
+            // Субтитры
             if (movie.subtitles && movie.subtitles !== '—' && movie.subtitles !== '') {
                 let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
                 let subLines = movie.subtitles.split(/[,;]/);
