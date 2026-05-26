@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Тест скорости</title></head>
+<body>
+    <h1>Тест загрузки movies.json</h1>
+    <div id="result">Загрузка...</div>
+    <script>
+        const start = Date.now();
+        fetch('./movies.json')
+            .then(r => r.json())
+            .then(data => {
+                const time = Date.now() - start;
+                document.getElementById('result').innerHTML = `
+                    ✅ Загружено ${data.movies.length} фильмов<br>
+                    ⏱ Время: ${time} мс<br>
+                    📦 Размер: ~${JSON.stringify(data).length / 1024} KB
+                `;
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = `❌ Ошибка: ${err.message}`;
+            });
+    </script>
+</body>
+</html>
