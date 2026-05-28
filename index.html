@@ -8,94 +8,87 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
-            min-height: 100vh;
-            color: #eee;
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 20px;
         }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        h1 { text-align: center; margin-bottom: 30px; color: #667eea; }
-        .search-section { margin-bottom: 30px; }
-        #searchInput {
-            width: 100%;
-            padding: 15px 20px;
-            font-size: 16px;
-            border: 2px solid #2d3561;
-            border-radius: 50px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            outline: none;
+        .header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #58a6ff; margin-bottom: 10px; }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
-        .filters { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
-        select {
-            padding: 10px 20px;
-            border-radius: 25px;
-            border: 1px solid #2d3561;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            cursor: pointer;
+        input, select {
+            padding: 10px 15px;
+            background: #1f2428;
+            border: 1px solid #3d444d;
+            border-radius: 8px;
+            color: #e6edf3;
+            font-size: 14px;
         }
-        .stats { text-align: right; margin-bottom: 20px; color: #b0b0b0; }
+        input { width: 300px; }
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #8d96a0;
+        }
         .movies-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
         }
         .movie-card {
-            background: rgba(255,255,255,0.08);
-            border-radius: 15px;
-            overflow: hidden;
+            background: #161b22;
+            border-radius: 12px;
+            padding: 15px;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.2s, background 0.2s;
         }
-        .movie-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.12); }
-        .movie-poster {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-            background: #2d3561;
+        .movie-card:hover {
+            transform: translateY(-3px);
+            background: #1f2428;
         }
-        .movie-poster-placeholder {
-            width: 100%;
-            height: 250px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #2d3561;
-            font-size: 48px;
+        .movie-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #58a6ff;
         }
-        .movie-info { padding: 15px; }
-        .movie-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
-        .movie-title-original { font-size: 13px; color: #8899aa; margin-bottom: 10px; }
-        .movie-detail { font-size: 12px; color: #b0b0b0; margin-top: 5px; }
-        .movie-label { color: #667eea; font-weight: bold; }
-        .loading, .no-results { text-align: center; padding: 60px; font-size: 18px; color: #b0b0b0; }
-        .error { text-align: center; padding: 40px; background: rgba(220,53,69,0.2); border-radius: 15px; color: #ff6b6b; }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(102,126,234,0.2);
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px;
+        .movie-year { font-size: 12px; color: #8d96a0; margin-bottom: 8px; }
+        .movie-genre { font-size: 12px; color: #8d96a0; }
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #8d96a0;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .error {
+            text-align: center;
+            padding: 40px;
+            background: #da36331a;
+            border-radius: 12px;
+            color: #f85149;
+        }
         .pagination {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 30px 0;
-            padding: 15px;
+            gap: 10px;
+            margin-top: 30px;
         }
         .pagination button {
-            padding: 8px 20px;
-            border-radius: 25px;
-            border: none;
-            background: #667eea;
-            color: white;
+            padding: 8px 16px;
+            background: #21262d;
+            border: 1px solid #3d444d;
+            border-radius: 8px;
+            color: #e6edf3;
             cursor: pointer;
         }
-        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -103,52 +96,44 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.9);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
         .modal-content {
-            background: #1a1a2e;
-            border-radius: 20px;
-            max-width: 700px;
+            background: #161b22;
+            border-radius: 16px;
+            max-width: 600px;
             width: 90%;
-            max-height: 85vh;
+            max-height: 80vh;
             overflow-y: auto;
-            padding: 25px;
-            border: 1px solid #667eea;
+            padding: 20px;
+            border: 1px solid #3d444d;
         }
         .close-modal {
             float: right;
             cursor: pointer;
-            font-size: 28px;
-            color: #667eea;
+            font-size: 24px;
+            color: #8d96a0;
         }
-        .modal h3 { color: #667eea; margin-bottom: 15px; }
-        .modal-detail { margin: 10px 0; padding: 8px; border-bottom: 1px solid #2d3561; }
-        .modal-link { color: #667eea; text-decoration: none; margin-right: 15px; }
-        .audio-line, .subtitle-line { display: block; padding: 4px 0 4px 20px; font-size: 12px; margin: 4px 0; }
-        .audio-line { border-left: 2px solid #667eea; }
-        .subtitle-line { border-left: 1px dashed #667eea; }
+        .modal-detail { margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #21262d; }
+        .movie-label { color: #58a6ff; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="header">
         <h1>🎬 Каталог медиафайлов</h1>
-        
-        <div class="search-section">
-            <input type="text" id="searchInput" placeholder="🔍 Поиск...">
-            <div class="filters">
-                <select id="genreFilter"><option value="">Все жанры</option></select>
-                <select id="yearFilter"><option value="">Все годы</option></select>
-                <select id="countryFilter"><option value="">Все страны</option></select>
-            </div>
+        <div class="search-box">
+            <input type="text" id="search" placeholder="🔍 Поиск...">
+            <select id="genreFilter"><option value="">Все жанры</option></select>
+            <select id="yearFilter"><option value="">Все годы</option></select>
         </div>
-        
         <div class="stats" id="stats"></div>
-        <div id="content"><div class="loading"><div class="spinner"></div>Загрузка...</div></div>
     </div>
-    
+    <div id="content"><div class="loading">Загрузка каталога...</div></div>
+    <div id="pagination" class="pagination"></div>
+
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -158,154 +143,133 @@
 
     <script>
         let allMovies = [];
-        let filteredMovies = [];
-        let currentPage = 1;
-        const PER_PAGE = 50;
+        let filtered = [];
+        let page = 1;
+        const PER_PAGE = 40;
         
-        async function loadMovies() {
+        async function load() {
             try {
-                console.log('Загрузка movies.json...');
-                const response = await fetch('./movies.json');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
+                const res = await fetch('./movies.json');
+                if (!res.ok) throw new Error('movies.json не найден');
+                const data = await res.json();
                 allMovies = data.movies;
-                console.log(`✅ Загружено ${allMovies.length} фильмов`);
+                console.log('Загружено:', allMovies.length);
                 
-                filteredMovies = [...allMovies];
-                applyFilters();
+                // Заполняем фильтры
+                const genres = new Set();
+                const years = new Set();
+                for (let m of allMovies) {
+                    if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g.trim()) genres.add(g.trim()); });
+                    if (m.year) years.add(m.year);
+                }
+                const genreSel = document.getElementById('genreFilter');
+                const yearSel = document.getElementById('yearFilter');
+                [...genres].sort().forEach(g => { genreSel.innerHTML += `<option value="${g}">${g}</option>`; });
+                [...years].sort((a,b)=>b-a).forEach(y => { yearSel.innerHTML += `<option value="${y}">${y}</option>`; });
                 
-            } catch (error) {
-                console.error('Ошибка:', error);
-                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+                filtered = [...allMovies];
+                render();
+            } catch(e) {
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${e.message}</div>`;
             }
         }
         
-        function applyFilters() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+        function filter() {
+            const search = document.getElementById('search').value.toLowerCase();
             const genre = document.getElementById('genreFilter').value;
             const year = document.getElementById('yearFilter').value;
-            const country = document.getElementById('countryFilter').value;
             
-            filteredMovies = allMovies.filter(m => {
+            filtered = allMovies.filter(m => {
                 if (search && !m.title.toLowerCase().includes(search) && !(m.originalTitle || '').toLowerCase().includes(search)) return false;
                 if (genre && !(m.genre || '').includes(genre)) return false;
                 if (year && m.year !== year) return false;
-                if (country && !(m.country || '').includes(country)) return false;
                 return true;
             });
-            
-            currentPage = 1;
-            renderMovies();
+            page = 1;
+            render();
         }
         
-        function renderMovies() {
-            const start = (currentPage - 1) * PER_PAGE;
-            const pageMovies = filteredMovies.slice(start, start + PER_PAGE);
-            const totalPages = Math.ceil(filteredMovies.length / PER_PAGE);
+        function render() {
+            const totalPages = Math.ceil(filtered.length / PER_PAGE);
+            const start = (page-1) * PER_PAGE;
+            const pageMovies = filtered.slice(start, start + PER_PAGE);
             
-            document.getElementById('stats').innerHTML = `📊 Найдено: ${filteredMovies.length} из ${allMovies.length} фильмов | Страница ${currentPage} из ${totalPages}`;
+            document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${allMovies.length} фильмов | Страница ${page} из ${totalPages || 1}`;
             
             if (pageMovies.length === 0) {
-                document.getElementById('content').innerHTML = '<div class="no-results">😔 Ничего не найдено</div>';
+                document.getElementById('content').innerHTML = '<div class="loading">😔 Ничего не найдено</div>';
+                document.getElementById('pagination').innerHTML = '';
                 return;
             }
             
             let html = '<div class="movies-grid">';
-            for (let m of pageMovies) {
-                const origIndex = allMovies.findIndex(x => x.id === m.id);
-                const posterHtml = m.posterUrl 
-                    ? `<img class="movie-poster" src="${m.posterUrl}" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
-                    : `<div class="movie-poster-placeholder">🎬</div>`;
-                
+            for (let i = 0; i < pageMovies.length; i++) {
+                const m = pageMovies[i];
+                const idx = allMovies.findIndex(x => x.id === m.id);
                 html += `
-                    <div class="movie-card" onclick="showDetails(${origIndex})">
-                        ${posterHtml}
-                        <div class="movie-info">
-                            <div class="movie-title">${escape(m.title)}</div>
-                            ${m.originalTitle ? `<div class="movie-title-original">${escape(m.originalTitle)}</div>` : ''}
-                            <div class="movie-detail"><span class="movie-label">📅 Год:</span> ${m.year || '—'}</div>
-                            <div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${(m.genre || '—').substring(0, 60)}</div>
-                            <div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${(m.director || '—').substring(0, 40)}</div>
-                        </div>
+                    <div class="movie-card" onclick="showDetails(${idx})">
+                        <div class="movie-title">${escape(m.title)}</div>
+                        ${m.originalTitle ? `<div class="movie-year">${escape(m.originalTitle)}</div>` : ''}
+                        <div class="movie-year">📅 ${m.year || '—'}</div>
+                        <div class="movie-genre">🎭 ${(m.genre || '—').substring(0, 60)}</div>
+                        ${m.director ? `<div class="movie-genre">🎬 ${escape(m.director).substring(0, 40)}</div>` : ''}
                     </div>
                 `;
             }
             html += '</div>';
-            
-            if (totalPages > 1) {
-                html += `
-                    <div class="pagination">
-                        <button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Назад</button>
-                        <button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Вперед ▶</button>
-                    </div>
-                `;
-            }
-            
             document.getElementById('content').innerHTML = html;
+            
+            // Пагинация
+            let pagHtml = '';
+            if (totalPages > 1) {
+                pagHtml = `<button onclick="goPage(${page-1})" ${page===1 ? 'disabled' : ''}>◀ Назад</button>`;
+                pagHtml += `<span style="margin:0 15px">Страница ${page} из ${totalPages}</span>`;
+                pagHtml += `<button onclick="goPage(${page+1})" ${page===totalPages ? 'disabled' : ''}>Вперед ▶</button>`;
+            }
+            document.getElementById('pagination').innerHTML = pagHtml;
             window.scrollTo({ top: 0 });
         }
         
-        function goPage(page) {
-            const total = Math.ceil(filteredMovies.length / PER_PAGE);
-            if (page < 1 || page > total) return;
-            currentPage = page;
-            renderMovies();
+        function goPage(p) {
+            const total = Math.ceil(filtered.length / PER_PAGE);
+            if (p < 1 || p > total) return;
+            page = p;
+            render();
         }
         
         window.showDetails = function(idx) {
             const m = allMovies[idx];
             if (!m) return;
-            
-            let links = '';
-            if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) links += `<a href="${escape(m.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
-            
-            let rating = '';
-            if (m.ratingKP) rating += `КП: ${m.ratingKP} `;
-            if (m.ratingIMDb) rating += `IMDb: ${m.ratingIMDb}`;
-            
             let html = `<h3>${escape(m.title)}</h3>`;
             if (m.originalTitle) html += `<div class="modal-detail"><span class="movie-label">Оригинал:</span> ${escape(m.originalTitle)}</div>`;
-            if (m.year) html += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${m.year}</div>`;
-            if (m.country) html += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escape(m.country)}</div>`;
-            if (m.genre) html += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escape(m.genre)}</div>`;
-            if (m.director) html += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escape(m.director)}</div>`;
-            if (m.actors) html += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escape(m.actors)}</div>`;
-            if (rating) html += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escape(rating)}</div>`;
-            if (m.description) html += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escape(m.description)}</div>`;
-            
+            if (m.year) html += `<div class="modal-detail"><span class="movie-label">Год:</span> ${m.year}</div>`;
+            if (m.country) html += `<div class="modal-detail"><span class="movie-label">Страна:</span> ${escape(m.country)}</div>`;
+            if (m.genre) html += `<div class="modal-detail"><span class="movie-label">Жанр:</span> ${escape(m.genre)}</div>`;
+            if (m.director) html += `<div class="modal-detail"><span class="movie-label">Режиссер:</span> ${escape(m.director)}</div>`;
+            if (m.actors) html += `<div class="modal-detail"><span class="movie-label">Актеры:</span> ${escape(m.actors).substring(0, 200)}</div>`;
+            if (m.description) html += `<div class="modal-detail"><span class="movie-label">Описание:</span> ${escape(m.description)}</div>`;
             if (m.audioInfo && m.audioInfo !== '—') {
-                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
-                const parts = m.audioInfo.split(/(?=Аудио #\d+)/);
-                for (let a of parts) if (a.trim()) audioHtml += `<div class="audio-line">🎧 ${escape(a.trim())}</div>`;
-                audioHtml += '</div>';
-                html += audioHtml;
+                html += `<div class="modal-detail"><span class="movie-label">Аудио:</span> ${escape(m.audioInfo).substring(0, 300)}</div>`;
             }
-            
             if (m.subtitles && m.subtitles !== '—') {
-                let subHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
-                const parts = m.subtitles.split(/[,;]/);
-                for (let s of parts) if (s.trim()) subHtml += `<div class="subtitle-line">📄 ${escape(s.trim())}</div>`;
-                subHtml += '</div>';
-                html += subHtml;
+                html += `<div class="modal-detail"><span class="movie-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
             }
-            
-            if (links) html += `<div class="modal-detail">${links}</div>`;
-            
+            if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
+                html += `<div class="modal-detail"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
+            }
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('modal').style.display = 'flex';
         };
         
         function escape(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
         
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
-        document.getElementById('genreFilter').addEventListener('change', applyFilters);
-        document.getElementById('yearFilter').addEventListener('change', applyFilters);
-        document.getElementById('countryFilter').addEventListener('change', applyFilters);
-        
+        document.getElementById('search').addEventListener('input', filter);
+        document.getElementById('genreFilter').addEventListener('change', filter);
+        document.getElementById('yearFilter').addEventListener('change', filter);
         document.querySelector('.close-modal').onclick = () => document.getElementById('modal').style.display = 'none';
         window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
-        loadMovies();
+        load();
     </script>
 </body>
 </html>
