@@ -42,7 +42,6 @@
             border-radius: 25px;
             cursor: pointer;
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
         .modal {
             display: none;
             position: fixed;
@@ -67,10 +66,56 @@
         .close { float: right; cursor: pointer; font-size: 24px; }
         .detail-line { margin: 10px 0; padding: 5px 0; border-bottom: 1px solid #21262d; }
         .detail-label { color: #58a6ff; font-weight: bold; }
+        
+        /* Кнопка случайного фильма */
+        .random-btn {
+            display: block;
+            margin: 0 auto 20px auto;
+            background: #58a6ff;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .random-btn:hover { transform: scale(1.02); }
+        
+        /* Кнопка темы */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #161b22;
+            border: 1px solid #3d444d;
+            cursor: pointer;
+            font-size: 22px;
+            z-index: 100;
+        }
+        
+        /* Светлая тема */
+        body.light {
+            background: #f6f8fa;
+            color: #1f2328;
+        }
+        body.light .card { background: #ffffff; }
+        body.light .card:hover { background: #f0f3f5; }
+        body.light .modal-content { background: #ffffff; }
+        body.light input, body.light select { background: #ffffff; color: #1f2328; }
+        body.light .theme-toggle { background: #ffffff; }
+        body.light .random-btn { background: #0969da; }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+    
     <h1>🎬 Каталог медиафайлов</h1>
+    
+    <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
     
     <div class="filters">
         <input type="text" id="search" placeholder="🔍 Поиск...">
@@ -95,13 +140,25 @@
         let page = 1;
         const perPage = 40;
         
+        // ===== ТЕМА =====
+        const themeToggle = document.getElementById('themeToggle');
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light');
+            themeToggle.textContent = '☀️';
+        }
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            const isLight = document.body.classList.contains('light');
+            themeToggle.textContent = isLight ? '☀️' : '🌙';
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+        
         async function load() {
             try {
                 const res = await fetch('./movies.json');
                 const data = await res.json();
                 movies = data.movies;
                 
-                // Заполняем фильтры
                 const genres = new Set();
                 const years = new Set();
                 for (let m of movies) {
@@ -116,7 +173,7 @@
                 filtered = [...movies];
                 render();
             } catch(e) {
-                document.getElementById('stats').innerHTML = '❌ Ошибка загрузки: ' + e.message;
+                document.getElementById('stats').innerHTML = 'Ошибка: ' + e.message;
             }
         }
         
@@ -140,7 +197,7 @@
             const pageMovies = filtered.slice(start, start+perPage);
             const totalPages = Math.ceil(filtered.length / perPage);
             
-            document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов | Страница ${page} из ${totalPages || 1}`;
+            document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов | Стр. ${page} из ${totalPages || 1}`;
             
             let html = '';
             for (let m of pageMovies) {
@@ -166,6 +223,14 @@
         
         function go(p) { page = p; render(); }
         
+        // ===== СЛУЧАЙНЫЙ ФИЛЬМ =====
+        document.getElementById('randomBtn').addEventListener('click', () => {
+            if (filtered.length === 0) return;
+            const rand = Math.floor(Math.random() * filtered.length);
+            const idx = movies.findIndex(x => x.id === filtered[rand].id);
+            show(idx);
+        });
+        
         window.show = function(idx) {
             const m = movies[idx];
             if (!m) return;
@@ -177,29 +242,8 @@
             if (m.director) html += `<div class="detail-line"><span class="detail-label">Режиссер:</span> ${escape(m.director)}</div>`;
             if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 250)}</div>`;
             if (m.description) html += `<div class="detail-line"><span class="detail-label">Описание:</span> ${escape(m.description)}</div>`;
-            if (m.audioInfo && m.audioInfo !== '—') {
-                let audioHtml = '<div class="detail-line"><span class="detail-label">🔊 Аудио:</span><br>';
-                // Разбиваем по переносам строк
-                const audioLines = m.audioInfo.split(/\r?\n/);
-                for (let line of audioLines) {
-                    if (line && line.trim()) {
-                        audioHtml += `<div class="audio-line">🎧 ${escape(line.trim())}</div>`;
-                    }
-                }
-                audioHtml += '</div>';
-                html += audioHtml;
-            }
-            if (m.subtitles && m.subtitles !== '—') {
-                let subHtml = '<div class="detail-line"><span class="detail-label">📝 Субтитры:</span><br>';
-                const subLines = m.subtitles.split(/[,;\n\r]+/);
-                for (let line of subLines) {
-                    if (line && line.trim()) {
-                        subHtml += `<div class="subtitle-line">📄 ${escape(line.trim())}</div>`;
-                    }
-                }
-                subHtml += '</div>';
-                html += subHtml;
-            }
+            if (m.audioInfo) html += `<div class="detail-line"><span class="detail-label">Аудио:</span> ${escape(m.audioInfo).substring(0, 200)}</div>`;
+            if (m.subtitles) html += `<div class="detail-line"><span class="detail-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
                 html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
             }
