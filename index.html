@@ -157,14 +157,22 @@
                 
                 const genres = new Set();
                 const years = new Set();
+                const countries = new Set();
+                const actors = new Set();
                 for (let m of movies) {
                     if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g.trim()) genres.add(g.trim()); });
                     if (m.year && m.year !== '—') years.add(m.year);
+                    if (m.country && m.country !== '—') countries.add(m.country);
+                    if (m.actors) m.actors.split(/[,;]/).forEach(a => { if(a && a.trim() && a.length > 2) actors.add(a.trim()); });
                 }
                 const genreSel = document.getElementById('genre');
                 const yearSel = document.getElementById('year');
+                const countrySel = document.getElementById('country');
+                const actorSel = document.getElementById('actor');
                 [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${g}">${g.substring(0, 50)}</option>`);
                 [...years].sort((a,b)=>b-a).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
+                [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${c}">${c.substring(0, 50)}</option>`);
+                [...actors].sort().forEach(a => actorSel.innerHTML += `<option value="${a}">${a.substring(0, 50)}</option>`);
                 
                 filtered = [...movies];
                 render();
@@ -177,11 +185,20 @@
             const search = document.getElementById('search').value.toLowerCase();
             const genre = document.getElementById('genre').value;
             const year = document.getElementById('year').value;
+            const country = document.getElementById('country').value;
+            const actor = document.getElementById('actor').value;
             
             filtered = movies.filter(m => {
-                if (search && !m.title.toLowerCase().includes(search) && !(m.originalTitle || '').toLowerCase().includes(search)) return false;
+                // Расширенный поиск по всем полям
+                const searchFields = [
+                    m.title, m.originalTitle, m.genre, m.actors, m.director, m.country
+                ].join(' ').toLowerCase();
+                
+                if (search && !searchFields.includes(search)) return false;
                 if (genre && !(m.genre || '').includes(genre)) return false;
                 if (year && m.year !== year) return false;
+                if (country && !(m.country || '').includes(country)) return false;
+                if (actor && !(m.actors || '').includes(actor)) return false;
                 return true;
             });
             page = 1;
