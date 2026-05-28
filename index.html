@@ -178,7 +178,7 @@
             if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 250)}</div>`;
             if (m.description) html += `<div class="detail-line"><span class="detail-label">Описание:</span> ${escape(m.description)}</div>`;
             if (m.audioInfo && m.audioInfo !== '—') {
-                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
+                let audioHtml = '<div class="detail-line"><span class="detail-label">🔊 Аудио:</span><br>';
                 // Разбиваем по переносам строк
                 const audioLines = m.audioInfo.split(/\r?\n/);
                 for (let line of audioLines) {
