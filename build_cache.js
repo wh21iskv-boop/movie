@@ -27,28 +27,25 @@ function parseCSVLine(line) {
 
 function cleanValue(v) { if (!v || v === '—' || v === '-') return ''; return v; }
 
-// Проверка, является ли строка реальным фильмом
-function isRealMovie(title, year, genre, actors, director) {
-    if (!title || title.length < 2) return false;
+function isRealMovie(title) {
+    if (!title) return false;
+    if (title.length < 3) return false;
     
     const titleLower = title.toLowerCase();
     
-    // Точные мусорные паттерны
-    const garbage = [
-        /^\d+\s*kb\/?s/i, /^\d+\.?\d*\s*khz/i, /^\d+\s*channels?/i,
-        /аудио\s*#?\d*/i, /ac3|dts|aac|mp3/i, /stereo|mono/i,
-        /track_/i, /h\.?264|xvid|divx/i, /^\d[\d\s\.:]+$/, /^\d+$/
+    // Жёсткие мусорные паттерны
+    const garbagePatterns = [
+        /кбит\/с/, /kbps/, /khz/, /channels?/, /ac-?\d/, /ac3/, /dts/,
+        /mp3/, /aac/, /stereo/, /mono/, /h\.?264/, /xvid/, /divx/, /mpeg/,
+        /subrip/, /оригинал/, /dvo/, /mvo/, /avo/, /озвучк/i, /дубляж/i,
+        /^\d/, /^eng\b/i, /^rus\b/i, /трек/i, /audio/i
     ];
-    for (const g of garbage) if (g.test(titleLower)) return false;
     
-    // Если есть жанр, год, актёры или режиссёр — это фильм
-    if (genre && genre.length > 2 && genre !== '—') return true;
-    if (year && year.match(/\d{4}/)) return true;
-    if (actors && actors.length > 5 && actors !== '—') return true;
-    if (director && director.length > 3 && director !== '—') return true;
-    if (titleLower.includes('фильм') && title.length > 4) return true;
+    for (const pattern of garbagePatterns) {
+        if (pattern.test(titleLower)) return false;
+    }
     
-    return false;
+    return true;
 }
 
 async function buildMoviesCache() {
@@ -75,17 +72,16 @@ async function buildMoviesCache() {
         
         const getVal = (idx) => idx < parts.length ? cleanValue(parts[idx]) : '';
         
-        const title = getVal(COL.russianTitle) || getVal(COL.originalTitle);
-        const yearRaw = getVal(COL.year);
-        const year = yearRaw.match(/\d{4}/)?.[0] || '';
-        const genre = getVal(COL.genre);
-        const actors = getVal(COL.actors);
-        const director = getVal(COL.director);
+        let title = getVal(COL.russianTitle);
         
-        if (!isRealMovie(title, year, genre, actors, director)) {
+        // Если нет русского названия — пропускаем
+        if (!title || !isRealMovie(title)) {
             skipped++;
             continue;
         }
+        
+        const yearRaw = getVal(COL.year);
+        const year = yearRaw.match(/\d{4}/)?.[0] || '';
         
         let ratingKP = getVal(COL.ratingKP);
         if (ratingKP && !ratingKP.match(/^\d+[,.]?\d*$/)) {
@@ -107,14 +103,14 @@ async function buildMoviesCache() {
             title: title,
             originalTitle: getVal(COL.originalTitle),
             year: year,
-            genre: genre,
+            genre: getVal(COL.genre),
             description: getVal(COL.description),
             kinopoiskLink: getVal(COL.kinopoiskLink),
             ratingKP: ratingKP,
             ratingIMDb: ratingIMDb,
-            actors: actors,
+            actors: getVal(COL.actors),
             country: getVal(COL.country),
-            director: director,
+            director: getVal(COL.director),
             duration: getVal(COL.duration),
             size: getVal(COL.size),
             resolution: getVal(COL.resolution),
@@ -124,12 +120,16 @@ async function buildMoviesCache() {
             yandexFolder: getVal(COL.yandexFolder),
             posterUrl: posterData ? posterData.posterUrl : null
         });
+        
+        if (movies.length <= 3) {
+            console.log(`✅ Фильм #${movies.length}: ${title} (${year})`);
+        }
     }
     
     const output = { lastUpdated: new Date().toISOString(), total: movies.length, movies: movies };
     fs.writeFileSync('movies.json', JSON.stringify(output));
     console.log(`\n✅ Сохранено фильмов: ${movies.length}`);
-    console.log(`   Пропущено мусора: ${skipped}`);
+    console.log(`   Пропущено строк: ${skipped}`);
 }
 
 buildMoviesCache().catch(console.error);
