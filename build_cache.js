@@ -11,21 +11,50 @@ const COL = {
     bitrate: 19, subtitles: 20, yandexFolder: 21
 };
 
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
+// Парсим CSV с сохранением переносов строк
+function parseCSVPreserveNewlines(csvText) {
+    const rows = [];
+    let currentRow = [];
+    let currentField = '';
     let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') inQuotes = !inQuotes;
-        else if (char === ',' && !inQuotes) { result.push(current); current = ''; }
-        else current += char;
+    
+    for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                currentField += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            currentRow.push(currentField);
+            currentField = '';
+        } else if (char === '\n' && !inQuotes) {
+            currentRow.push(currentField);
+            rows.push(currentRow);
+            currentRow = [];
+            currentField = '';
+        } else {
+            currentField += char;
+        }
     }
-    result.push(current);
-    return result.map(f => f.replace(/^"|"$/g, '').trim());
+    
+    if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        rows.push(currentRow);
+    }
+    
+    // Очищаем от лишних кавычек
+    return rows.map(row => row.map(field => field.replace(/^"|"$/g, '').trim()));
 }
 
-function cleanValue(v) { if (!v || v === '—' || v === '-') return ''; return v; }
+function cleanValue(v) { 
+    if (!v || v === '—' || v === '-') return ''; 
+    return v; 
+}
 
 function isRealMovie(title) {
     if (!title) return false;
@@ -33,7 +62,6 @@ function isRealMovie(title) {
     
     const titleLower = title.toLowerCase();
     
-    // Жёсткие мусорные паттерны
     const garbagePatterns = [
         /кбит\/с/, /kbps/, /khz/, /channels?/, /ac-?\d/, /ac3/, /dts/,
         /mp3/, /aac/, /stereo/, /mono/, /h\.?264/, /xvid/, /divx/, /mpeg/,
@@ -60,25 +88,31 @@ async function buildMoviesCache() {
     
     const csvUrl = `https://docs.google.com/spreadsheets/d/e/${SPREADSHEET_ID}/pub?output=csv`;
     const response = await axios.get(csvUrl);
-    const lines = response.data.split('\n');
-    console.log(`📊 Всего строк: ${lines.length}`);
+    const rows = parseCSVPreserveNewlines(response.data);
+    console.log(`📊 Всего строк: ${rows.length}`);
     
     const movies = [];
     let skipped = 0;
     
-    for (let i = 1; i < lines.length; i++) {
-        const parts = parseCSVLine(lines[i]);
+    for (let i = 1; i < rows.length; i++) {
+        const parts = rows[i];
         if (parts.length < 3) { skipped++; continue; }
         
         const getVal = (idx) => idx < parts.length ? cleanValue(parts[idx]) : '';
         
         let title = getVal(COL.russianTitle);
         
-        // Если нет русского названия — пропускаем
         if (!title || !isRealMovie(title)) {
             skipped++;
             continue;
         }
+        
+        // Многострочные поля — сохраняем как есть (с переносами)
+        let audioInfo = getVal(COL.audio);
+        let subtitles = getVal(COL.subtitles);
+        
+        // Если поле содержит переносы строк, оставляем их
+        // В HTML они преобразуются в <br> или разбиваются на строки
         
         const yearRaw = getVal(COL.year);
         const year = yearRaw.match(/\d{4}/)?.[0] || '';
@@ -114,8 +148,8 @@ async function buildMoviesCache() {
             duration: getVal(COL.duration),
             size: getVal(COL.size),
             resolution: getVal(COL.resolution),
-            audioInfo: getVal(COL.audio),
-            subtitles: getVal(COL.subtitles),
+            audioInfo: audioInfo,
+            subtitles: subtitles,
             fileName: getVal(COL.fileName),
             yandexFolder: getVal(COL.yandexFolder),
             posterUrl: posterData ? posterData.posterUrl : null
@@ -123,6 +157,8 @@ async function buildMoviesCache() {
         
         if (movies.length <= 3) {
             console.log(`✅ Фильм #${movies.length}: ${title} (${year})`);
+            console.log(`   Аудио (первые 100 символов): ${(audioInfo || '').substring(0, 100)}`);
+            console.log(`   Субтитры: ${subtitles || 'нет'}`);
         }
     }
     
