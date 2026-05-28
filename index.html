@@ -5,314 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Каталог медиафайлов</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --bg-gradient-start: #1a1a2e;
-            --bg-gradient-end: #16213e;
-            --card-bg: rgba(255,255,255,0.08);
-            --card-bg-hover: rgba(255,255,255,0.12);
-            --text-primary: #eee;
-            --text-secondary: #b0b0b0;
-            --text-muted: #8899aa;
-            --border-color: #2d3561;
-            --accent: #667eea;
-            --accent-hover: #764ba2;
-            --modal-bg: linear-gradient(135deg, #1e1e3a 0%, #1a1a2e 100%);
-            --input-bg: rgba(255,255,255,0.1);
-            --input-focus: rgba(255,255,255,0.15);
-            --select-text: #ffffff;
-        }
-        
-        body.light {
-            --bg-gradient-start: #f5f5f7;
-            --bg-gradient-end: #e8e8ec;
-            --card-bg: rgba(0,0,0,0.05);
-            --card-bg-hover: rgba(0,0,0,0.08);
-            --text-primary: #1a1a2e;
-            --text-secondary: #444;
-            --text-muted: #666;
-            --border-color: #ddd;
-            --accent: #5a67d8;
-            --accent-hover: #6b46c1;
-            --modal-bg: linear-gradient(135deg, #ffffff 0%, #f0f0f5 100%);
-            --input-bg: rgba(0,0,0,0.05);
-            --input-focus: rgba(0,0,0,0.1);
-            --select-text: #1a1a2e;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
             min-height: 100vh;
-            color: var(--text-primary);
-            transition: background 0.3s, color 0.3s;
+            color: #eee;
         }
-        
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            transition: all 0.3s;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-        
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            background: var(--accent);
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: fadeInDown 0.8s ease;
-        }
-        
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .sort-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        
-        .sort-section label {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-        
-        .sort-select {
-            padding: 8px 15px;
-            border-radius: 25px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--select-text);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .random-btn {
-            padding: 8px 20px;
-            border-radius: 25px;
-            border: none;
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .random-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .search-section {
-            margin-bottom: 20px;
-        }
-        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 30px; color: #667eea; }
+        .search-section { margin-bottom: 30px; }
         #searchInput {
             width: 100%;
             padding: 15px 20px;
             font-size: 16px;
-            border: 2px solid var(--border-color);
+            border: 2px solid #2d3561;
             border-radius: 50px;
-            background: var(--input-bg);
-            color: var(--text-primary);
+            background: rgba(255,255,255,0.1);
+            color: white;
             outline: none;
-            transition: all 0.3s;
         }
-        
-        #searchInput:focus {
-            border-color: var(--accent);
-            background: var(--input-focus);
-            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .filters {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
+        .filters { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
         select {
             padding: 10px 20px;
             border-radius: 25px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--select-text);
+            border: 1px solid #2d3561;
+            background: rgba(255,255,255,0.1);
+            color: white;
             cursor: pointer;
-            min-width: 150px;
-            transition: all 0.3s;
         }
-        
-        select:hover {
-            border-color: var(--accent);
-        }
-        
-        .stats {
-            text-align: right;
-            margin-bottom: 20px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            padding: 8px 15px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            display: inline-block;
-            float: right;
-        }
-        
-        .update-info {
-            text-align: right;
-            margin-bottom: 10px;
-            font-size: 11px;
-            color: var(--text-muted);
-            clear: both;
-        }
-        
+        .stats { text-align: right; margin-bottom: 20px; color: #b0b0b0; }
         .movies-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
-            clear: both;
         }
-        
         .movie-card {
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.08);
             border-radius: 15px;
             overflow: hidden;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            transition: transform 0.3s;
         }
-        
-        .movie-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            background: var(--card-bg-hover);
-        }
-        
+        .movie-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.12); }
         .movie-poster {
             width: 100%;
             height: 250px;
             object-fit: cover;
-            background: var(--bg-gradient-start);
+            background: #2d3561;
         }
-        
         .movie-poster-placeholder {
             width: 100%;
             height: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--border-color) 0%, var(--bg-gradient-start) 100%);
+            background: #2d3561;
             font-size: 48px;
         }
-        
-        .movie-info {
-            padding: 15px;
-        }
-        
-        .movie-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: var(--text-primary);
-        }
-        
-        .movie-title-original {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            font-style: italic;
-        }
-        
-        .movie-detail {
-            font-size: 12px;
-            color: var(--text-secondary);
-            line-height: 1.4;
-            margin-top: 5px;
-        }
-        
-        .movie-label {
-            color: var(--accent);
-            font-weight: bold;
-        }
-        
-        .loading, .no-results {
-            text-align: center;
-            padding: 60px;
-            font-size: 18px;
-            color: var(--text-secondary);
-        }
-        
-        .error {
-            text-align: center;
-            padding: 40px;
-            background: rgba(220, 53, 69, 0.2);
-            border-radius: 15px;
-            margin: 20px;
-            color: #ff6b6b;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
+        .movie-info { padding: 15px; }
+        .movie-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .movie-title-original { font-size: 13px; color: #8899aa; margin-bottom: 10px; }
+        .movie-detail { font-size: 12px; color: #b0b0b0; margin-top: 5px; }
+        .movie-label { color: #667eea; font-weight: bold; }
+        .loading, .no-results { text-align: center; padding: 60px; font-size: 18px; color: #b0b0b0; }
+        .error { text-align: center; padding: 40px; background: rgba(220,53,69,0.2); border-radius: 15px; color: #ff6b6b; }
         .spinner {
             width: 40px;
             height: 40px;
             border: 3px solid rgba(102,126,234,0.2);
-            border-top-color: var(--accent);
+            border-top-color: #667eea;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 15px;
         }
-        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 15px;
+        }
+        .pagination button {
+            padding: 8px 20px;
+            border-radius: 25px;
+            border: none;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+        }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
         .modal {
             display: none;
             position: fixed;
@@ -325,153 +108,45 @@
             justify-content: center;
             align-items: center;
         }
-        
         .modal-content {
-            background: var(--modal-bg);
+            background: #1a1a2e;
             border-radius: 20px;
             max-width: 700px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
             padding: 25px;
-            border: 1px solid var(--accent);
+            border: 1px solid #667eea;
         }
-        
         .close-modal {
             float: right;
             cursor: pointer;
             font-size: 28px;
-            color: var(--accent);
-            font-weight: bold;
+            color: #667eea;
         }
-        
-        .close-modal:hover {
-            color: #ff6b6b;
-            transform: scale(1.2);
-        }
-        
-        .modal h3 {
-            margin-bottom: 15px;
-            color: var(--accent);
-            font-size: 24px;
-            border-left: 3px solid var(--accent);
-            padding-left: 15px;
-        }
-        
-        .modal-detail {
-            margin: 10px 0;
-            padding: 8px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .modal-link {
-            display: inline-block;
-            margin-right: 15px;
-            color: var(--accent);
-            text-decoration: none;
-        }
-        
-        .audio-line {
-            display: block;
-            padding: 5px 0 5px 20px;
-            font-size: 12px;
-            border-left: 2px solid var(--accent);
-            margin: 5px 0;
-        }
-        
-        .subtitle-line {
-            display: block;
-            padding: 4px 0 4px 20px;
-            font-size: 12px;
-            border-left: 1px dashed var(--accent);
-            margin: 4px 0;
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 30px 0;
-            padding: 15px;
-            background: var(--card-bg);
-            border-radius: 50px;
-            flex-wrap: wrap;
-        }
-        
-        .pagination button {
-            padding: 8px 20px;
-            border-radius: 25px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .pagination button:hover:not(:disabled) {
-            transform: scale(1.05);
-            background: var(--accent-hover);
-        }
-        
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .pagination span {
-            color: var(--text-primary);
-            padding: 8px 0;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--bg-gradient-start);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 10px;
-        }
+        .modal h3 { color: #667eea; margin-bottom: 15px; }
+        .modal-detail { margin: 10px 0; padding: 8px; border-bottom: 1px solid #2d3561; }
+        .modal-link { color: #667eea; text-decoration: none; margin-right: 15px; }
+        .audio-line, .subtitle-line { display: block; padding: 4px 0 4px 20px; font-size: 12px; margin: 4px 0; }
+        .audio-line { border-left: 2px solid #667eea; }
+        .subtitle-line { border-left: 1px dashed #667eea; }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" id="themeToggle">🌙</button>
-    
     <div class="container">
         <h1>🎬 Каталог медиафайлов</h1>
         
-        <div class="top-bar">
-            <div class="sort-section">
-                <label>📊 Сортировать:</label>
-                <select id="sortSelect" class="sort-select">
-                    <option value="default">По умолчанию</option>
-                    <option value="year_asc">📅 Год (старые → новые)</option>
-                    <option value="year_desc">📅 Год (новые → старые)</option>
-                    <option value="rating_desc">⭐ Рейтинг (сначала высокие)</option>
-                    <option value="title_asc">🔤 Название (А → Я)</option>
-                    <option value="title_desc">🔤 Название (Я → А)</option>
-                </select>
-            </div>
-            <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
-        </div>
-        
         <div class="search-section">
-            <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, жанру, актерам, режиссеру...">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск...">
             <div class="filters">
-                <select id="genreFilter"><option value="">🎭 Все жанры</option></select>
-                <select id="yearFilter"><option value="">📅 Все годы</option></select>
-                <select id="countryFilter"><option value="">🌍 Все страны</option></select>
-                <select id="actorFilter"><option value="">⭐ Все актеры</option></select>
+                <select id="genreFilter"><option value="">Все жанры</option></select>
+                <select id="yearFilter"><option value="">Все годы</option></select>
+                <select id="countryFilter"><option value="">Все страны</option></select>
             </div>
         </div>
         
         <div class="stats" id="stats"></div>
-        <div class="update-info" id="updateInfo"></div>
-        <div id="content"><div class="loading"><div class="spinner"></div>Загрузка каталога...</div></div>
+        <div id="content"><div class="loading"><div class="spinner"></div>Загрузка...</div></div>
     </div>
     
     <div id="modal" class="modal">
@@ -485,289 +160,150 @@
         let allMovies = [];
         let filteredMovies = [];
         let currentPage = 1;
-        const ITEMS_PER_PAGE = 50;
-        let uniqueGenres = new Set();
-        let uniqueYears = new Set();
-        let uniqueCountries = new Set();
-        let uniqueActors = new Set();
-        let currentSort = 'default';
-        let lastUpdated = null;
+        const PER_PAGE = 50;
         
-        // ===== ТЕМА =====
-        const themeToggle = document.getElementById('themeToggle');
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        if (savedTheme === 'light') {
-            document.body.classList.add('light');
-            themeToggle.textContent = '☀️';
-        }
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('light');
-            const isLight = document.body.classList.contains('light');
-            themeToggle.textContent = isLight ? '☀️' : '🌙';
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        });
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        async function loadMovies() {
+            try {
+                console.log('Загрузка movies.json...');
+                const response = await fetch('./movies.json');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                allMovies = data.movies;
+                console.log(`✅ Загружено ${allMovies.length} фильмов`);
+                
+                filteredMovies = [...allMovies];
+                applyFilters();
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${error.message}</div>`;
+            }
         }
         
-        function getRating(movie) {
-            if (movie.ratingKP && movie.ratingKP !== '—') return `КП: ${movie.ratingKP}`;
-            if (movie.ratingIMDb && movie.ratingIMDb !== '—') return `IMDb: ${movie.ratingIMDb}`;
-            return '—';
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const genre = document.getElementById('genreFilter').value;
+            const year = document.getElementById('yearFilter').value;
+            const country = document.getElementById('countryFilter').value;
+            
+            filteredMovies = allMovies.filter(m => {
+                if (search && !m.title.toLowerCase().includes(search) && !(m.originalTitle || '').toLowerCase().includes(search)) return false;
+                if (genre && !(m.genre || '').includes(genre)) return false;
+                if (year && m.year !== year) return false;
+                if (country && !(m.country || '').includes(country)) return false;
+                return true;
+            });
+            
+            currentPage = 1;
+            renderMovies();
         }
         
-        window.showMovieDetails = function(index) {
-            const movie = allMovies[index];
-            if (!movie) return;
+        function renderMovies() {
+            const start = (currentPage - 1) * PER_PAGE;
+            const pageMovies = filteredMovies.slice(start, start + PER_PAGE);
+            const totalPages = Math.ceil(filteredMovies.length / PER_PAGE);
             
-            const modal = document.getElementById('modal');
-            const modalBody = document.getElementById('modalBody');
-            
-            let links = '';
-            if (movie.kinopoiskLink && movie.kinopoiskLink.startsWith('http')) {
-                links += `<a href="${escapeHtml(movie.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
-            }
-            
-            let rating = '';
-            if (movie.ratingKP && movie.ratingKP !== '—') rating += `КП: ${movie.ratingKP} `;
-            if (movie.ratingIMDb && movie.ratingIMDb !== '—') rating += `IMDb: ${movie.ratingIMDb}`;
-            
-            let detailsHtml = `<h3>${escapeHtml(movie.title)}</h3>`;
-            if (movie.originalTitle && movie.originalTitle !== movie.title) {
-                detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Оригинальное название:</span> ${escapeHtml(movie.originalTitle)}</div>`;
-            }
-            if (movie.year) detailsHtml += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(movie.year)}</div>`;
-            if (movie.country && movie.country !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escapeHtml(movie.country)}</div>`;
-            if (movie.genre && movie.genre !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre)}</div>`;
-            if (movie.director && movie.director !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director)}</div>`;
-            if (movie.actors && movie.actors !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escapeHtml(movie.actors)}</div>`;
-            if (rating) detailsHtml += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escapeHtml(rating)}</div>`;
-            if (movie.description && movie.description !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escapeHtml(movie.description)}</div>`;
-            if (movie.duration && movie.duration !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escapeHtml(movie.duration)}</div>`;
-            if (movie.resolution && movie.resolution !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escapeHtml(movie.resolution)}</div>`;
-            if (movie.size && movie.size !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">💾 Размер:</span> ${escapeHtml(movie.size)} ГБ</div>`;
-            
-            if (movie.audioInfo && movie.audioInfo !== '—') {
-                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
-                let audioLines = movie.audioInfo.split(/(?=Аудио #\d+)|(?:\n)/);
-                for (const audio of audioLines) {
-                    if (audio && audio.trim()) {
-                        audioHtml += `<div class="audio-line">🎧 ${escapeHtml(audio.trim())}</div>`;
-                    }
-                }
-                audioHtml += '</div>';
-                detailsHtml += audioHtml;
-            }
-            
-            if (movie.subtitles && movie.subtitles !== '—') {
-                let subsHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
-                let subLines = movie.subtitles.split(/[,;]/);
-                for (const sub of subLines) {
-                    if (sub && sub.trim()) {
-                        subsHtml += `<div class="subtitle-line">📄 ${escapeHtml(sub.trim())}</div>`;
-                    }
-                }
-                subsHtml += '</div>';
-                detailsHtml += subsHtml;
-            }
-            
-            if (movie.fileName && movie.fileName !== '—') detailsHtml += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escapeHtml(movie.fileName)}</div>`;
-            if (links) detailsHtml += `<div class="modal-detail"><span class="movie-label">🔗 Ссылки:</span><br>${links}</div>`;
-            
-            modalBody.innerHTML = detailsHtml;
-            modal.style.display = 'flex';
-        };
-        
-        document.getElementById('randomBtn').addEventListener('click', () => {
-            if (filteredMovies.length === 0) return;
-            const randomIndex = Math.floor(Math.random() * filteredMovies.length);
-            const randomMovie = filteredMovies[randomIndex];
-            const originalIndex = allMovies.findIndex(m => m.id === randomMovie.id);
-            if (originalIndex !== -1) showMovieDetails(originalIndex);
-        });
-        
-        function sortMovies(movies) {
-            const sorted = [...movies];
-            switch(currentSort) {
-                case 'year_asc': sorted.sort((a, b) => (parseInt(a.year) || 0) - (parseInt(b.year) || 0)); break;
-                case 'year_desc': sorted.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0)); break;
-                case 'rating_desc': sorted.sort((a, b) => {
-                    const ra = parseFloat(a.ratingKP || a.ratingIMDb || 0);
-                    const rb = parseFloat(b.ratingKP || b.ratingIMDb || 0);
-                    return rb - ra;
-                }); break;
-                case 'title_asc': sorted.sort((a, b) => a.title.localeCompare(b.title)); break;
-                case 'title_desc': sorted.sort((a, b) => b.title.localeCompare(a.title)); break;
-                default: return movies;
-            }
-            return sorted;
-        }
-        
-        function renderPage() {
-            const start = (currentPage - 1) * ITEMS_PER_PAGE;
-            const end = start + ITEMS_PER_PAGE;
-            const pageMovies = filteredMovies.slice(start, end);
-            
-            document.getElementById('stats').innerHTML = `📊 Найдено: ${filteredMovies.length} из ${allMovies.length} фильмов`;
+            document.getElementById('stats').innerHTML = `📊 Найдено: ${filteredMovies.length} из ${allMovies.length} фильмов | Страница ${currentPage} из ${totalPages}`;
             
             if (pageMovies.length === 0) {
                 document.getElementById('content').innerHTML = '<div class="no-results">😔 Ничего не найдено</div>';
                 return;
             }
             
-            let cardsHtml = '<div class="movies-grid">';
-            for (const movie of pageMovies) {
-                const originalIndex = allMovies.findIndex(m => m.id === movie.id);
-                const posterHtml = movie.posterUrl
-                    ? `<img class="movie-poster" src="${escapeHtml(movie.posterUrl)}" alt="Постер" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
+            let html = '<div class="movies-grid">';
+            for (let m of pageMovies) {
+                const origIndex = allMovies.findIndex(x => x.id === m.id);
+                const posterHtml = m.posterUrl 
+                    ? `<img class="movie-poster" src="${m.posterUrl}" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
                     : `<div class="movie-poster-placeholder">🎬</div>`;
                 
-                cardsHtml += `
-                    <div class="movie-card" onclick="showMovieDetails(${originalIndex})">
+                html += `
+                    <div class="movie-card" onclick="showDetails(${origIndex})">
                         ${posterHtml}
                         <div class="movie-info">
-                            <div class="movie-title">${escapeHtml(movie.title.length > 60 ? movie.title.substring(0,60)+'...' : movie.title)}</div>
-                            ${movie.originalTitle && movie.originalTitle !== movie.title ? `<div class="movie-title-original">${escapeHtml(movie.originalTitle.length > 50 ? movie.originalTitle.substring(0,50)+'...' : movie.originalTitle)}</div>` : ''}
-                            <div class="movie-detail"><span class="movie-label">📅 Год:</span> ${escapeHtml(movie.year || '—')}</div>
-                            <div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${escapeHtml(movie.genre ? (movie.genre.length > 50 ? movie.genre.substring(0,50)+'...' : movie.genre) : '—')}</div>
-                            <div class="movie-detail"><span class="movie-label">⭐ Рейтинг:</span> ${escapeHtml(getRating(movie))}</div>
-                            <div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${escapeHtml(movie.director ? (movie.director.length > 40 ? movie.director.substring(0,40)+'...' : movie.director) : '—')}</div>
+                            <div class="movie-title">${escape(m.title)}</div>
+                            ${m.originalTitle ? `<div class="movie-title-original">${escape(m.originalTitle)}</div>` : ''}
+                            <div class="movie-detail"><span class="movie-label">📅 Год:</span> ${m.year || '—'}</div>
+                            <div class="movie-detail"><span class="movie-label">🎭 Жанр:</span> ${(m.genre || '—').substring(0, 60)}</div>
+                            <div class="movie-detail"><span class="movie-label">🎬 Режиссер:</span> ${(m.director || '—').substring(0, 40)}</div>
                         </div>
                     </div>
                 `;
             }
-            cardsHtml += '</div>';
+            html += '</div>';
             
-            const totalPages = Math.ceil(filteredMovies.length / ITEMS_PER_PAGE);
-            cardsHtml += `
-                <div class="pagination">
-                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Назад</button>
-                    <span>Страница ${currentPage} из ${totalPages}</span>
-                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Вперед ▶</button>
-                </div>
-            `;
-            
-            document.getElementById('content').innerHTML = cardsHtml;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        function changePage(newPage) {
-            const totalPages = Math.ceil(filteredMovies.length / ITEMS_PER_PAGE);
-            if (newPage < 1 || newPage > totalPages) return;
-            currentPage = newPage;
-            renderPage();
-        }
-        
-        function applyFilterAndSort() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const selectedGenre = document.getElementById('genreFilter').value;
-            const selectedYear = document.getElementById('yearFilter').value;
-            const selectedCountry = document.getElementById('countryFilter').value;
-            const selectedActor = document.getElementById('actorFilter').value;
-            
-            let filtered = allMovies.filter(movie => {
-                const searchFields = [movie.title, movie.originalTitle, movie.genre, movie.actors, movie.director, movie.description, movie.country].join(' ').toLowerCase();
-                const matchesSearch = !searchTerm || searchFields.includes(searchTerm);
-                
-                let matchesGenre = !selectedGenre;
-                if (selectedGenre && !matchesGenre) {
-                    const movieGenres = (movie.genre || '').split(/[,;\/]/).map(g => g.trim());
-                    matchesGenre = movieGenres.includes(selectedGenre);
-                }
-                
-                const matchesYear = !selectedYear || movie.year === selectedYear;
-                const matchesCountry = !selectedCountry || (movie.country || '').includes(selectedCountry);
-                
-                let matchesActor = !selectedActor;
-                if (selectedActor && !matchesActor) {
-                    const movieActors = (movie.actors || '').split(/[,;]/).map(a => a.trim());
-                    matchesActor = movieActors.some(actor => actor.includes(selectedActor));
-                }
-                return matchesSearch && matchesGenre && matchesYear && matchesCountry && matchesActor;
-            });
-            
-            filtered = sortMovies(filtered);
-            filteredMovies = filtered;
-            currentPage = 1;
-            renderPage();
-        }
-        
-        async function loadMovies() {
-            try {
-                const response = await fetch('./movies.json');
-                if (!response.ok) throw new Error('movies.json не найден');
-                const data = await response.json();
-                allMovies = data.movies;
-                lastUpdated = data.lastUpdated;
-                
-                console.log(`📊 Загружено ${allMovies.length} фильмов`);
-                if (lastUpdated) {
-                    document.getElementById('updateInfo').innerHTML = `🔄 Обновлено: ${new Date(lastUpdated).toLocaleString('ru-RU')}`;
-                }
-                
-                for (const movie of allMovies) {
-                    if (movie.genre && movie.genre !== '—') {
-                        movie.genre.split(/[,;\/]/).forEach(g => {
-                            const genre = g.trim();
-                            if (genre && genre.length > 1) uniqueGenres.add(genre);
-                        });
-                    }
-                    if (movie.year && movie.year !== '—') uniqueYears.add(movie.year);
-                    if (movie.country && movie.country !== '—') uniqueCountries.add(movie.country);
-                    if (movie.actors && movie.actors !== '—') {
-                        movie.actors.split(/[,;]/).forEach(actor => {
-                            const a = actor.trim();
-                            if (a && a.length > 2) uniqueActors.add(a);
-                        });
-                    }
-                }
-                
-                const populate = (id, values, sortNum = false) => {
-                    const select = document.getElementById(id);
-                    let arr = Array.from(values);
-                    if (sortNum) arr.sort((a,b) => parseInt(b) - parseInt(a));
-                    else arr.sort();
-                    arr.forEach(v => { if(v) select.innerHTML += `<option value="${escapeHtml(v)}">${escapeHtml(v.length>50? v.substring(0,50)+'...':v)}</option>`; });
-                };
-                
-                document.getElementById('genreFilter').innerHTML = '<option value="">🎭 Все жанры</option>';
-                document.getElementById('yearFilter').innerHTML = '<option value="">📅 Все годы</option>';
-                document.getElementById('countryFilter').innerHTML = '<option value="">🌍 Все страны</option>';
-                document.getElementById('actorFilter').innerHTML = '<option value="">⭐ Все актеры</option>';
-                
-                populate('genreFilter', uniqueGenres);
-                populate('yearFilter', uniqueYears, true);
-                populate('countryFilter', uniqueCountries);
-                populate('actorFilter', uniqueActors);
-                
-                filteredMovies = [...allMovies];
-                renderPage();
-                
-            } catch (error) {
-                console.error('Ошибка:', error);
-                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка загрузки: ${error.message}<br><br><button onclick="location.reload()" style="padding:10px 20px; background:var(--accent); border:none; border-radius:25px; color:white; cursor:pointer;">Перезагрузить</button></div>`;
+            if (totalPages > 1) {
+                html += `
+                    <div class="pagination">
+                        <button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Назад</button>
+                        <button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Вперед ▶</button>
+                    </div>
+                `;
             }
+            
+            document.getElementById('content').innerHTML = html;
+            window.scrollTo({ top: 0 });
         }
         
-        let searchTimeout;
-        document.getElementById('searchInput').addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilterAndSort, 300);
-        });
-        document.getElementById('sortSelect').addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            applyFilterAndSort();
-        });
-        document.getElementById('genreFilter').addEventListener('change', applyFilterAndSort);
-        document.getElementById('yearFilter').addEventListener('change', applyFilterAndSort);
-        document.getElementById('countryFilter').addEventListener('change', applyFilterAndSort);
-        document.getElementById('actorFilter').addEventListener('change', applyFilterAndSort);
+        function goPage(page) {
+            const total = Math.ceil(filteredMovies.length / PER_PAGE);
+            if (page < 1 || page > total) return;
+            currentPage = page;
+            renderMovies();
+        }
         
-        const modal = document.getElementById('modal');
-        document.querySelector('.close-modal').onclick = () => modal.style.display = 'none';
-        window.onclick = (event) => { if (event.target === modal) modal.style.display = 'none'; };
+        window.showDetails = function(idx) {
+            const m = allMovies[idx];
+            if (!m) return;
+            
+            let links = '';
+            if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) links += `<a href="${escape(m.kinopoiskLink)}" target="_blank" class="modal-link">🎬 Кинопоиск</a>`;
+            
+            let rating = '';
+            if (m.ratingKP) rating += `КП: ${m.ratingKP} `;
+            if (m.ratingIMDb) rating += `IMDb: ${m.ratingIMDb}`;
+            
+            let html = `<h3>${escape(m.title)}</h3>`;
+            if (m.originalTitle) html += `<div class="modal-detail"><span class="movie-label">Оригинал:</span> ${escape(m.originalTitle)}</div>`;
+            if (m.year) html += `<div class="modal-detail"><span class="movie-label">📅 Год:</span> ${m.year}</div>`;
+            if (m.country) html += `<div class="modal-detail"><span class="movie-label">🌍 Страна:</span> ${escape(m.country)}</div>`;
+            if (m.genre) html += `<div class="modal-detail"><span class="movie-label">🎭 Жанр:</span> ${escape(m.genre)}</div>`;
+            if (m.director) html += `<div class="modal-detail"><span class="movie-label">🎬 Режиссер:</span> ${escape(m.director)}</div>`;
+            if (m.actors) html += `<div class="modal-detail"><span class="movie-label">⭐ Актеры:</span> ${escape(m.actors)}</div>`;
+            if (rating) html += `<div class="modal-detail"><span class="movie-label">📊 Рейтинг:</span> ${escape(rating)}</div>`;
+            if (m.description) html += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escape(m.description)}</div>`;
+            
+            if (m.audioInfo && m.audioInfo !== '—') {
+                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
+                const parts = m.audioInfo.split(/(?=Аудио #\d+)/);
+                for (let a of parts) if (a.trim()) audioHtml += `<div class="audio-line">🎧 ${escape(a.trim())}</div>`;
+                audioHtml += '</div>';
+                html += audioHtml;
+            }
+            
+            if (m.subtitles && m.subtitles !== '—') {
+                let subHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+                const parts = m.subtitles.split(/[,;]/);
+                for (let s of parts) if (s.trim()) subHtml += `<div class="subtitle-line">📄 ${escape(s.trim())}</div>`;
+                subHtml += '</div>';
+                html += subHtml;
+            }
+            
+            if (links) html += `<div class="modal-detail">${links}</div>`;
+            
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('modal').style.display = 'flex';
+        };
+        
+        function escape(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
+        
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('genreFilter').addEventListener('change', applyFilters);
+        document.getElementById('yearFilter').addEventListener('change', applyFilters);
+        document.getElementById('countryFilter').addEventListener('change', applyFilters);
+        
+        document.querySelector('.close-modal').onclick = () => document.getElementById('modal').style.display = 'none';
+        window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
         loadMovies();
     </script>
