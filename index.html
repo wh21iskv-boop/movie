@@ -177,8 +177,29 @@
             if (m.director) html += `<div class="detail-line"><span class="detail-label">Режиссер:</span> ${escape(m.director)}</div>`;
             if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 250)}</div>`;
             if (m.description) html += `<div class="detail-line"><span class="detail-label">Описание:</span> ${escape(m.description)}</div>`;
-            if (m.audioInfo) html += `<div class="detail-line"><span class="detail-label">Аудио:</span> ${escape(m.audioInfo).substring(0, 200)}</div>`;
-            if (m.subtitles) html += `<div class="detail-line"><span class="detail-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
+            if (m.audioInfo && m.audioInfo !== '—') {
+                let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
+                // Разбиваем по переносам строк
+                const audioLines = m.audioInfo.split(/\r?\n/);
+                for (let line of audioLines) {
+                    if (line && line.trim()) {
+                        audioHtml += `<div class="audio-line">🎧 ${escape(line.trim())}</div>`;
+                    }
+                }
+                audioHtml += '</div>';
+                html += audioHtml;
+            }
+            if (m.subtitles && m.subtitles !== '—') {
+                let subHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+                const subLines = m.subtitles.split(/[,;]/);
+                for (let line of subLines) {
+                    if (line && line.trim()) {
+                        subHtml += `<div class="subtitle-line">📄 ${escape(line.trim())}</div>`;
+                    }
+                }
+                subHtml += '</div>';
+                html += subHtml;
+            }
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
                 html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
             }
