@@ -113,7 +113,7 @@
     <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
     
     <div class="filters">
-        <input type="text" id="search" placeholder="🔍 Поиск...">
+        <input type="text" id="search" placeholder="🔍 Поиск по названию, актёрам, режиссёру...">
         <select id="genre"><option value="">Все жанры</option></select>
         <select id="year"><option value="">Все годы</option></select>
         <select id="country"><option value="">Все страны</option></select>
@@ -159,16 +159,24 @@
                 const years = new Set();
                 const countries = new Set();
                 const actors = new Set();
+                
                 for (let m of movies) {
                     if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g.trim()) genres.add(g.trim()); });
                     if (m.year && m.year !== '—') years.add(m.year);
                     if (m.country && m.country !== '—') countries.add(m.country);
                     if (m.actors) m.actors.split(/[,;]/).forEach(a => { if(a && a.trim() && a.length > 2) actors.add(a.trim()); });
                 }
+                
                 const genreSel = document.getElementById('genre');
                 const yearSel = document.getElementById('year');
                 const countrySel = document.getElementById('country');
                 const actorSel = document.getElementById('actor');
+                
+                genreSel.innerHTML = '<option value="">Все жанры</option>';
+                yearSel.innerHTML = '<option value="">Все годы</option>';
+                countrySel.innerHTML = '<option value="">Все страны</option>';
+                actorSel.innerHTML = '<option value="">Все актеры</option>';
+                
                 [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${g}">${g.substring(0, 50)}</option>`);
                 [...years].sort((a,b)=>b-a).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
                 [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${c}">${c.substring(0, 50)}</option>`);
@@ -189,7 +197,6 @@
             const actor = document.getElementById('actor').value;
             
             filtered = movies.filter(m => {
-                // Расширенный поиск по всем полям
                 const searchFields = [
                     m.title, m.originalTitle, m.genre, m.actors, m.director, m.country
                 ].join(' ').toLowerCase();
@@ -268,6 +275,8 @@
         document.getElementById('search').addEventListener('input', filter);
         document.getElementById('genre').addEventListener('change', filter);
         document.getElementById('year').addEventListener('change', filter);
+        document.getElementById('country').addEventListener('change', filter);
+        document.getElementById('actor').addEventListener('change', filter);
         document.getElementById('closeModal').onclick = () => document.getElementById('modal').style.display = 'none';
         window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
