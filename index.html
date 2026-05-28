@@ -314,9 +314,9 @@
                 countrySel.innerHTML = '<option value="">🌍 Все страны</option>';
                 actorSel.innerHTML = '<option value="">⭐ Все актеры</option>';
                 
-                [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${escape(g)}">${escape(g)}</option>`);
+                [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${escape(g)}">${escape(g).substring(0, 50)}</option>`);
                 [...years].sort((a,b)=>parseInt(b)-parseInt(a)).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
-                [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${escape(c)}">${escape(c)}</option>`);
+                [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${escape(c)}">${escape(c).substring(0, 50)}</option>`);
                 [...actors].sort().forEach(a => actorSel.innerHTML += `<option value="${escape(a)}">${escape(a).substring(0, 50)}</option>`);
                 
                 filteredMovies = [...allMovies];
@@ -324,7 +324,7 @@
                 
             } catch(e) {
                 console.error(e);
-                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${e.message}<br><br>Файл movies.json не найден или повреждён</div>`;
+                document.getElementById('content').innerHTML = `<div class="error">❌ Ошибка: ${e.message}</div>`;
             }
         }
         
@@ -421,8 +421,8 @@
             if (!m) return;
             
             let rating = '';
-            if (m.ratingKP) rating += `КП: ${m.ratingKP} `;
-            if (m.ratingIMDb) rating += `IMDb: ${m.ratingIMDb}`;
+            if (m.ratingKP && m.ratingKP !== '—') rating += `КП: ${m.ratingKP} `;
+            if (m.ratingIMDb && m.ratingIMDb !== '—') rating += `IMDb: ${m.ratingIMDb}`;
             
             let links = '';
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
@@ -440,6 +440,7 @@
             if (m.description) html += `<div class="modal-detail"><span class="movie-label">📖 Описание:</span> ${escape(m.description)}</div>`;
             if (m.duration) html += `<div class="modal-detail"><span class="movie-label">⏱ Длительность:</span> ${escape(m.duration)}</div>`;
             if (m.resolution) html += `<div class="modal-detail"><span class="movie-label">📺 Разрешение:</span> ${escape(m.resolution)}</div>`;
+            if (m.fileName) html += `<div class="modal-detail"><span class="movie-label">📁 Файл:</span> ${escape(m.fileName)}</div>`;
             
             if (m.audioInfo && m.audioInfo !== '—') {
                 let audioHtml = '<div class="modal-detail"><span class="movie-label">🔊 Аудио:</span><br>';
