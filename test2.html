@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест 2</title>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <h1>Тест загрузки movies.json</h1>
+    <div id="result">Загрузка...</div>
+    
+    <script>
+        fetch('./movies.json')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = `
+                    ✅ Успех!<br>
+                    Фильмов: ${data.movies.length}<br>
+                    Последнее обновление: ${data.lastUpdated}<br>
+                    <br>
+                    <strong>Пример первого фильма:</strong><br>
+                    <pre>${JSON.stringify(data.movies[0], null, 2)}</pre>
+                `;
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = `❌ Ошибка: ${err.message}`;
+            });
+    </script>
+</body>
+</html>
