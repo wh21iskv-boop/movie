@@ -190,7 +190,7 @@
                 html += audioHtml;
             }
             if (m.subtitles && m.subtitles !== '—') {
-                let subHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
+                let subHtml = '<div class="detail-line"><span class="detail-label">📝 Субтитры:</span><br>';
                 const subLines = m.subtitles.split(/[,;\n\r]+/);
                 for (let line of subLines) {
                     if (line && line.trim()) {
