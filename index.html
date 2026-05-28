@@ -191,7 +191,7 @@
             }
             if (m.subtitles && m.subtitles !== '—') {
                 let subHtml = '<div class="modal-detail"><span class="movie-label">📝 Субтитры:</span><br>';
-                const subLines = m.subtitles.split(/[,;]/);
+                const subLines = m.subtitles.split(/[,;]\r?\n/);
                 for (let line of subLines) {
                     if (line && line.trim()) {
                         subHtml += `<div class="subtitle-line">📄 ${escape(line.trim())}</div>`;
