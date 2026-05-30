@@ -161,6 +161,7 @@
                 const res = await fetch('./movies.json');
                 const data = await res.json();
                 movies = data.movies;
+                console.log('Загружено фильмов:', movies.length);
                 
                 const genres = new Set(), years = new Set();
                 for (let m of movies) {
@@ -178,6 +179,7 @@
                 render();
             } catch(e) {
                 document.getElementById('stats').innerHTML = 'Ошибка: ' + e.message;
+                console.error(e);
             }
         }
         
@@ -187,7 +189,6 @@
             const year = document.getElementById('year').value;
             
             filtered = movies.filter(m => {
-                // Расширенный поиск по всем полям
                 const searchFields = [
                     m.title, m.originalTitle, m.genre, m.actors, m.director, m.country, m.description
                 ].join(' ').toLowerCase();
