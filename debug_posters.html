@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head><title>Отладка постеров</title></head>
+<body>
+    <h1>Отладка постеров</h1>
+    <div id="result">Загрузка...</div>
+    <script>
+        Promise.all([
+            fetch('./movies.json').then(r => r.json()),
+            fetch('./posters.json').then(r => r.json())
+        ]).then(([moviesData, postersData]) => {
+            const movies = moviesData.movies;
+            const posters = postersData.posters || {};
+            const posterKeys = Object.keys(posters);
+            
+            // Берём первый фильм из movies
+            const firstMovie = movies[0];
+            const firstMovieKey = `${firstMovie.title}_${firstMovie.year}`;
+            const firstMovieKeySimple = firstMovie.title;
+            
+            // Проверяем, есть ли постер для первого фильма
+            const hasPosterKey = posters[firstMovieKey];
+            const hasPosterSimple = posters[firstMovieKeySimple];
+            
+            // Выводим информацию
+            let html = `
+                <h2>Информация о первом фильме:</h2>
+                <p>Название: ${firstMovie.title}</p>
+                <p>Год: ${firstMovie.year}</p>
+                <p>Ключ с годом: "${firstMovieKey}"</p>
+                <p>Ключ без года: "${firstMovieKeySimple}"</p>
+                
+                <h2>Проверка наличия в posters.json:</h2>
+                <p>По ключу с годом: ${hasPosterKey ? '✅ НАЙДЕН' : '❌ НЕ НАЙДЕН'}</p>
+                <p>По ключу без года: ${hasPosterSimple ? '✅ НАЙДЕН' : '❌ НЕ НАЙДЕН'}</p>
+                
+                <h2>Примеры ключей из posters.json (первые 5):</h2>
+                <ul>
+                    ${posterKeys.slice(0, 5).map(k => `<li>"${k}" → ${posters[k]?.posterUrl?.substring(0, 50) || 'нет URL'}</li>`).join('')}
+                </ul>
+                
+                <h2>Примеры фильмов из movies.json (первые 5):</h2>
+                <ul>
+                    ${movies.slice(0, 5).map(m => `<li>${m.title} (${m.year}) → ищем ключ "${m.title}_${m.year}"</li>`).join('')}
+                </ul>
+            `;
+            
+            document.getElementById('result').innerHTML = html;
+        }).catch(err => {
+            document.getElementById('result').innerHTML = 'Ошибка: ' + err.message;
+        });
+    </script>
+</body>
+</html>
