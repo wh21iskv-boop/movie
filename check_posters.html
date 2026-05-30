@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><title>Проверка постеров</title></head>
+<body>
+    <h1>Проверка постеров в posters.json</h1>
+    <div id="result">Загрузка...</div>
+    <script>
+        Promise.all([
+            fetch('./movies.json').then(r => r.json()),
+            fetch('./posters.json').then(r => r.json())
+        ]).then(([moviesData, postersData]) => {
+            const movies = moviesData.movies;
+            const posters = postersData.posters || {};
+            const posterKeys = Object.keys(posters);
+            
+            let hasPoster = 0;
+            for (let m of movies.slice(0, 100)) {
+                const key = `${m.title}_${m.year || 'no-year'}`;
+                if (posters[key] && posters[key].posterUrl) hasPoster++;
+            }
+            
+            document.getElementById('result').innerHTML = `
+                <p>📸 Всего в posters.json: ${posterKeys.length} записей</p>
+                <p>🖼 Фильмов с постерами (первые 100): ${hasPoster} из 100</p>
+                <p>📋 Пример ключа: ${posterKeys[0] || 'нет'}</p>
+                <p>🎬 Пример фильма: ${movies[0]?.title} (${movies[0]?.year})</p>
+            `;
+        }).catch(err => {
+            document.getElementById('result').innerHTML = 'Ошибка: ' + err.message;
+        });
+    </script>
+</body>
+</html>
