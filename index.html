@@ -179,14 +179,14 @@
         
         // Получение URL постера
         function getPosterUrl(movie) {
-            // Пробуем найти по ключу с годом
+            // Сначала ищем по названию (без года) — это основной способ
+            if (posterCache[movie.title] && posterCache[movie.title].posterUrl) {
+                return posterCache[movie.title].posterUrl;
+            }
+            // Пробуем найти по названию с годом
             const keyWithYear = `${movie.title}_${movie.year || 'no-year'}`;
             if (posterCache[keyWithYear] && posterCache[keyWithYear].posterUrl) {
                 return posterCache[keyWithYear].posterUrl;
-            }
-            // Пробуем найти просто по названию
-            if (posterCache[movie.title] && posterCache[movie.title].posterUrl) {
-                return posterCache[movie.title].posterUrl;
             }
             // Пробуем найти по оригинальному названию
             if (movie.originalTitle && posterCache[movie.originalTitle] && posterCache[movie.originalTitle].posterUrl) {
