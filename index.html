@@ -21,13 +21,18 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        .random-btn {
+        .random-btn, .sort-select {
             background: #58a6ff;
             border: none;
             color: white;
             padding: 8px 20px;
             border-radius: 25px;
             cursor: pointer;
+        }
+        .sort-select {
+            background: #161b22;
+            border: 1px solid #3d444d;
+            color: #e6edf3;
         }
         
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
@@ -52,16 +57,6 @@
         .card:hover { transform: translateY(-3px); background: #1f2428; }
         .title { font-weight: bold; color: #58a6ff; }
         .year { font-size: 12px; color: #8d96a0; margin-top: 5px; }
-        .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 30px; }
-        .pagination button {
-            background: #58a6ff;
-            border: none;
-            color: white;
-            padding: 6px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .modal {
             display: none;
@@ -109,7 +104,7 @@
         body.light .card { background: #ffffff; }
         body.light .card:hover { background: #f0f3f5; }
         body.light .modal-content { background: #ffffff; }
-        body.light input, body.light select { background: #ffffff; color: #1f2328; border-color: #d0d7de; }
+        body.light input, body.light select, body.light .sort-select { background: #ffffff; color: #1f2328; border-color: #d0d7de; }
         body.light .theme-toggle { background: #ffffff; }
     </style>
 </head>
@@ -118,6 +113,13 @@
     <h1>🎬 Каталог медиафайлов</h1>
     
     <div class="top-bar">
+        <select id="sortSelect" class="sort-select">
+            <option value="default">📊 По умолчанию</option>
+            <option value="year_asc">📅 Год (старые → новые)</option>
+            <option value="year_desc">📅 Год (новые → старые)</option>
+            <option value="title_asc">🔤 Название (А → Я)</option>
+            <option value="title_desc">🔤 Название (Я → А)</option>
+        </select>
         <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
     </div>
     
@@ -129,7 +131,6 @@
     
     <div class="stats" id="stats">Загрузка...</div>
     <div id="movies" class="movies"></div>
-    <div id="pagination" class="pagination"></div>
     
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -139,8 +140,8 @@
     </div>
 
     <script>
-        let movies = [], filtered = [], page = 1;
-        const perPage = 40;
+        let movies = [], filtered = [];
+        let currentSort = 'default';
         
         // Тема
         const themeToggle = document.getElementById('themeToggle');
@@ -155,6 +156,48 @@
         });
         
         function escape(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
+        
+        // Сортировка
+        function sortMovies(arr) {
+            const sorted = [...arr];
+            switch(currentSort) {
+                case 'year_asc':
+                    sorted.sort((a,b) => (parseInt(a.year)||0) - (parseInt(b.year)||0));
+                    break;
+                case 'year_desc':
+                    sorted.sort((a,b) => (parseInt(b.year)||0) - (parseInt(a.year)||0));
+                    break;
+                case 'title_asc':
+                    sorted.sort((a,b) => a.title.localeCompare(b.title));
+                    break;
+                case 'title_desc':
+                    sorted.sort((a,b) => b.title.localeCompare(a.title));
+                    break;
+                default: break;
+            }
+            return sorted;
+        }
+        
+        // Применение фильтров и сортировки
+        function applyFiltersAndSort() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const genre = document.getElementById('genre').value;
+            const year = document.getElementById('year').value;
+            
+            let result = movies.filter(m => {
+                const searchFields = [
+                    m.title, m.originalTitle, m.genre, m.actors, m.director, m.country, m.description
+                ].join(' ').toLowerCase();
+                
+                if (search && !searchFields.includes(search)) return false;
+                if (genre && !(m.genre || '').includes(genre)) return false;
+                if (year && m.year !== year) return false;
+                return true;
+            });
+            
+            filtered = sortMovies(result);
+            render();
+        }
         
         async function load() {
             try {
@@ -183,40 +226,16 @@
             }
         }
         
-        function filter() {
-            const search = document.getElementById('search').value.toLowerCase();
-            const genre = document.getElementById('genre').value;
-            const year = document.getElementById('year').value;
-            
-            filtered = movies.filter(m => {
-                const searchFields = [
-                    m.title, m.originalTitle, m.genre, m.actors, m.director, m.country, m.description
-                ].join(' ').toLowerCase();
-                
-                if (search && !searchFields.includes(search)) return false;
-                if (genre && !(m.genre || '').includes(genre)) return false;
-                if (year && m.year !== year) return false;
-                return true;
-            });
-            page = 1;
-            render();
-        }
-        
         function render() {
-            const start = (page-1)*perPage;
-            const pageMovies = filtered.slice(start, start+perPage);
-            const totalPages = Math.ceil(filtered.length / perPage);
+            document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов`;
             
-            document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов | Стр. ${page} из ${totalPages || 1}`;
-            
-            if (pageMovies.length === 0) {
+            if (filtered.length === 0) {
                 document.getElementById('movies').innerHTML = '<div style="text-align:center">😔 Ничего не найдено</div>';
-                document.getElementById('pagination').innerHTML = '';
                 return;
             }
             
             let html = '';
-            for (let m of pageMovies) {
+            for (let m of filtered) {
                 html += `
                     <div class="card" onclick="showDetails(${movies.findIndex(x=>x.id===m.id)})">
                         <div class="title">${escape(m.title).substring(0, 60)}</div>
@@ -226,18 +245,7 @@
                 `;
             }
             document.getElementById('movies').innerHTML = html;
-            
-            let pagHtml = '';
-            if (totalPages > 1) {
-                pagHtml = `<button onclick="goPage(${page-1})" ${page===1?'disabled':''}>◀ Назад</button>`;
-                pagHtml += `<span style="margin:0 15px">${page} / ${totalPages}</span>`;
-                pagHtml += `<button onclick="goPage(${page+1})" ${page===totalPages?'disabled':''}>Вперед ▶</button>`;
-            }
-            document.getElementById('pagination').innerHTML = pagHtml;
-            window.scrollTo({ top: 0 });
         }
-        
-        function goPage(p) { page = p; render(); }
         
         document.getElementById('randomBtn').addEventListener('click', () => {
             if (filtered.length === 0) return;
@@ -269,10 +277,14 @@
         let searchTimeout;
         document.getElementById('search').addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(filter, 300);
+            searchTimeout = setTimeout(applyFiltersAndSort, 300);
         });
-        document.getElementById('genre').addEventListener('change', filter);
-        document.getElementById('year').addEventListener('change', filter);
+        document.getElementById('genre').addEventListener('change', applyFiltersAndSort);
+        document.getElementById('year').addEventListener('change', applyFiltersAndSort);
+        document.getElementById('sortSelect').addEventListener('change', (e) => {
+            currentSort = e.target.value;
+            applyFiltersAndSort();
+        });
         document.getElementById('closeModal').onclick = () => document.getElementById('modal').style.display = 'none';
         window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
