@@ -63,17 +63,7 @@
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 10px;
-        }
-        .movie-poster-placeholder {
-            width: 100%;
-            height: 200px;
             background: #1f2428;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 48px;
         }
         
         .modal {
@@ -124,7 +114,6 @@
         body.light .modal-content { background: #ffffff; }
         body.light input, body.light select, body.light .sort-select { background: #ffffff; color: #1f2328; border-color: #d0d7de; }
         body.light .theme-toggle { background: #ffffff; }
-        body.light .movie-poster-placeholder { background: #e8eaed; }
     </style>
 </head>
 <body>
@@ -163,39 +152,34 @@
         let currentSort = 'default';
         let posterCache = {};
         
-        // Загрузка постеров
         async function loadPosters() {
             try {
                 const res = await fetch('./posters.json');
                 if (res.ok) {
                     const data = await res.json();
                     posterCache = data.posters || {};
-                    console.log('Загружено постеров:', Object.keys(posterCache).length);
+                    console.log('Постеров в кеше:', Object.keys(posterCache).length);
                 }
-            } catch(e) {
-                console.log('Постеры не загружены:', e);
-            }
+            } catch(e) { console.log('Постеры не загружены'); }
         }
         
-        // Получение URL постера
         function getPosterUrl(movie) {
-            // Сначала ищем по названию (без года) — это основной способ
+            // Сначала ищем по точному названию (как в posters.json)
             if (posterCache[movie.title] && posterCache[movie.title].posterUrl) {
                 return posterCache[movie.title].posterUrl;
             }
-            // Пробуем найти по названию с годом
-            const keyWithYear = `${movie.title}_${movie.year || 'no-year'}`;
+            // Потом по названию с годом
+            const keyWithYear = `${movie.title}_${movie.year}`;
             if (posterCache[keyWithYear] && posterCache[keyWithYear].posterUrl) {
                 return posterCache[keyWithYear].posterUrl;
             }
-            // Пробуем найти по оригинальному названию
+            // Потом по оригинальному названию
             if (movie.originalTitle && posterCache[movie.originalTitle] && posterCache[movie.originalTitle].posterUrl) {
                 return posterCache[movie.originalTitle].posterUrl;
             }
             return null;
         }
         
-        // Тема
         const themeToggle = document.getElementById('themeToggle');
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light');
@@ -209,28 +193,18 @@
         
         function escape(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
         
-        // Сортировка
         function sortMovies(arr) {
             const sorted = [...arr];
             switch(currentSort) {
-                case 'year_asc':
-                    sorted.sort((a,b) => (parseInt(a.year)||0) - (parseInt(b.year)||0));
-                    break;
-                case 'year_desc':
-                    sorted.sort((a,b) => (parseInt(b.year)||0) - (parseInt(a.year)||0));
-                    break;
-                case 'title_asc':
-                    sorted.sort((a,b) => a.title.localeCompare(b.title));
-                    break;
-                case 'title_desc':
-                    sorted.sort((a,b) => b.title.localeCompare(a.title));
-                    break;
+                case 'year_asc': sorted.sort((a,b) => (parseInt(a.year)||0) - (parseInt(b.year)||0)); break;
+                case 'year_desc': sorted.sort((a,b) => (parseInt(b.year)||0) - (parseInt(a.year)||0)); break;
+                case 'title_asc': sorted.sort((a,b) => a.title.localeCompare(b.title)); break;
+                case 'title_desc': sorted.sort((a,b) => b.title.localeCompare(a.title)); break;
                 default: break;
             }
             return sorted;
         }
         
-        // Применение фильтров и сортировки
         function applyFiltersAndSort() {
             const search = document.getElementById('search').value.toLowerCase();
             const genre = document.getElementById('genre').value;
@@ -240,13 +214,11 @@
                 const searchFields = [
                     m.title, m.originalTitle, m.genre, m.actors, m.director, m.country, m.description
                 ].join(' ').toLowerCase();
-                
                 if (search && !searchFields.includes(search)) return false;
                 if (genre && !(m.genre || '').includes(genre)) return false;
                 if (year && m.year !== year) return false;
                 return true;
             });
-            
             filtered = sortMovies(result);
             render();
         }
@@ -254,7 +226,6 @@
         async function load() {
             try {
                 await loadPosters();
-                
                 const res = await fetch('./movies.json');
                 const data = await res.json();
                 movies = data.movies;
@@ -276,13 +247,11 @@
                 render();
             } catch(e) {
                 document.getElementById('stats').innerHTML = 'Ошибка: ' + e.message;
-                console.error(e);
             }
         }
         
         function render() {
             document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов`;
-            
             if (filtered.length === 0) {
                 document.getElementById('movies').innerHTML = '<div style="text-align:center">😔 Ничего не найдено</div>';
                 return;
@@ -292,8 +261,8 @@
             for (let m of filtered) {
                 const posterUrl = getPosterUrl(m);
                 const posterHtml = posterUrl
-                    ? `<img class="movie-poster" src="${escape(posterUrl)}" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">`
-                    : `<div class="movie-poster-placeholder">🎬</div>`;
+                    ? `<img class="movie-poster" src="${escape(posterUrl)}" onerror="this.style.display='none'">`
+                    : '';
                 
                 html += `
                     <div class="card" onclick="showDetails(${movies.findIndex(x=>x.id===m.id)})">
