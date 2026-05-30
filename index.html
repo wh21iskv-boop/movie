@@ -38,7 +38,8 @@
             padding: 8px 15px;
             border-radius: 25px;
         }
-        input { width: 250px; }
+        input { width: 260px; }
+        select { min-width: 130px; }
         
         .stats { text-align: center; margin-bottom: 20px; color: #8d96a0; font-size: 14px; }
         .movies { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
@@ -122,9 +123,11 @@
     </div>
     
     <div class="filters">
-        <input type="text" id="search" placeholder="🔍 Поиск по названию...">
+        <input type="text" id="search" placeholder="🔍 Поиск по названию, актёрам, режиссёру...">
         <select id="genre"><option value="">Все жанры</option></select>
         <select id="year"><option value="">Все годы</option></select>
+        <select id="country"><option value="">Все страны</option></select>
+        <select id="actor"><option value="">Все актеры</option></select>
     </div>
     
     <div class="stats" id="stats">Загрузка...</div>
@@ -162,15 +165,28 @@
                 const data = await res.json();
                 movies = data.movies;
                 
-                const genres = new Set(), years = new Set();
+                const genres = new Set(), years = new Set(), countries = new Set(), actors = new Set();
                 for (let m of movies) {
                     if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g && g.trim()) genres.add(g.trim()); });
                     if (m.year && m.year !== '—') years.add(m.year);
+                    if (m.country && m.country !== '—') countries.add(m.country);
+                    if (m.actors) m.actors.split(/[,;]/).forEach(a => { if(a && a.trim() && a.length > 2) actors.add(a.trim()); });
                 }
+                
                 const genreSel = document.getElementById('genre');
                 const yearSel = document.getElementById('year');
+                const countrySel = document.getElementById('country');
+                const actorSel = document.getElementById('actor');
+                
+                genreSel.innerHTML = '<option value="">Все жанры</option>';
+                yearSel.innerHTML = '<option value="">Все годы</option>';
+                countrySel.innerHTML = '<option value="">Все страны</option>';
+                actorSel.innerHTML = '<option value="">Все актеры</option>';
+                
                 [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${escape(g)}">${escape(g)}</option>`);
                 [...years].sort((a,b)=>b-a).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
+                [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${escape(c)}">${escape(c)}</option>`);
+                [...actors].sort().forEach(a => actorSel.innerHTML += `<option value="${escape(a)}">${escape(a).substring(0, 45)}</option>`);
                 
                 filtered = [...movies];
                 render();
@@ -183,11 +199,16 @@
             const search = document.getElementById('search').value.toLowerCase();
             const genre = document.getElementById('genre').value;
             const year = document.getElementById('year').value;
+            const country = document.getElementById('country').value;
+            const actor = document.getElementById('actor').value;
             
             filtered = movies.filter(m => {
-                if (search && !m.title.toLowerCase().includes(search)) return false;
+                const searchFields = [m.title, m.originalTitle, m.genre, m.actors, m.director, m.country].join(' ').toLowerCase();
+                if (search && !searchFields.includes(search)) return false;
                 if (genre && !(m.genre || '').includes(genre)) return false;
                 if (year && m.year !== year) return false;
+                if (country && !(m.country || '').includes(country)) return false;
+                if (actor && !(m.actors || '').includes(actor)) return false;
                 return true;
             });
             page = 1;
@@ -231,7 +252,6 @@
         
         function goPage(p) { page = p; render(); }
         
-        // Случайный фильм
         document.getElementById('randomBtn').addEventListener('click', () => {
             if (filtered.length === 0) return;
             const rand = Math.floor(Math.random() * filtered.length);
@@ -239,7 +259,6 @@
             showDetails(idx);
         });
         
-        // Детали фильма
         window.showDetails = function(idx) {
             const m = movies[idx];
             if (!m) return;
@@ -260,7 +279,6 @@
             document.getElementById('modal').style.display = 'flex';
         };
         
-        // Обработчики
         let searchTimeout;
         document.getElementById('search').addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -268,6 +286,8 @@
         });
         document.getElementById('genre').addEventListener('change', filter);
         document.getElementById('year').addEventListener('change', filter);
+        document.getElementById('country').addEventListener('change', filter);
+        document.getElementById('actor').addEventListener('change', filter);
         document.getElementById('closeModal').onclick = () => document.getElementById('modal').style.display = 'none';
         window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
