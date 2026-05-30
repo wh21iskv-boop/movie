@@ -294,7 +294,22 @@
             if (m.director) html += `<div class="detail-line"><span class="detail-label">Режиссер:</span> ${escape(m.director)}</div>`;
             if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 250)}</div>`;
             if (m.description) html += `<div class="detail-line"><span class="detail-label">Описание:</span> ${escape(m.description)}</div>`;
-            if (m.audioInfo) html += `<div class="detail-line"><span class="detail-label">Аудио:</span> ${escape(m.audioInfo).substring(0, 200)}</div>`;
+            if (m.audioInfo) {
+              const audioLines = m.audioInfo.split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .map(line => `<div class="audio-item">${escape(line)}</div>`)
+                .join('');
+            
+              if (audioLines) {
+                html += `
+                  <div class="detail-line audio-container">
+                    <span class="detail-label">Аудио:</span>
+                    <div class="audio-list">${audioLines}</div>
+                  </div>
+                `;
+              }
+            }
             if (m.subtitles) html += `<div class="detail-line"><span class="detail-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
                 html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
