@@ -310,7 +310,32 @@
                 `;
               }
             }
-            if (m.subtitles) html += `<div class="detail-line"><span class="detail-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
+            if (m.subtitles) {
+              // Очищаем исходный текст от пробелов по краям
+              const cleanSubtitles = m.subtitles.trim();
+              
+              // Проверяем, что строка не пустая и не содержит стоп-слова
+              const hasNoSubtitles = ['нет', 'none', '-', 'not available'].includes(cleanSubtitles.toLowerCase());
+            
+              if (cleanSubtitles.length > 0 && !hasNoSubtitles) {
+                const subtitlesLines = cleanSubtitles.split(/\r?\n/)
+                  .map(line => line.trim())
+                  .filter(line => line.length > 0)
+                  .map(line => `<div class="subtitles-item">${escape(line)}</div>`)
+                  .join('');
+            
+                // Финальная проверка: если после фильтрации строк что-то осталось, выводим HTML
+                if (subtitlesLines) {
+                  html += `
+                    <div class="detail-line subtitles-container">
+                      <span class="detail-label">Субтитры:</span>
+                      <div class="subtitles-list">${subtitlesLines}</div>
+                    </div>
+                  `;
+                }
+              }
+            }
+
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
                 html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
             }
