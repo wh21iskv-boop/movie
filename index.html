@@ -11,40 +11,17 @@
             color: #e6edf3;
             padding: 20px;
         }
-        h1 { text-align: center; color: #58a6ff; margin-bottom: 20px; }
-        
-        .top-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .random-btn, .sort-select {
-            background: #58a6ff;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-        }
-        .sort-select {
-            background: #161b22;
-            border: 1px solid #3d444d;
-            color: #e6edf3;
-        }
-        
+        h1 { text-align: center; color: #58a6ff; margin-bottom: 30px; }
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
         input, select {
             background: #161b22;
             border: 1px solid #3d444d;
             color: #e6edf3;
-            padding: 8px 15px;
+            padding: 10px 15px;
             border-radius: 25px;
         }
         input { width: 250px; }
-        
-        .stats { text-align: center; margin-bottom: 20px; color: #8d96a0; font-size: 14px; }
+        .stats { text-align: center; margin-bottom: 20px; color: #8d96a0; }
         .movies { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .card {
             background: #161b22;
@@ -57,16 +34,14 @@
         .title { font-weight: bold; color: #58a6ff; }
         .year { font-size: 12px; color: #8d96a0; margin-top: 5px; }
         .pagination { display: flex; justify-content: center; gap: 10px; margin-top: 30px; }
-        .pagination button {
+        button {
             background: #58a6ff;
             border: none;
             color: white;
-            padding: 6px 15px;
-            border-radius: 20px;
+            padding: 8px 20px;
+            border-radius: 25px;
             cursor: pointer;
         }
-        .pagination button:disabled { opacity: 0.5; }
-        
         .modal {
             display: none;
             position: fixed;
@@ -92,6 +67,18 @@
         .detail-line { margin: 10px 0; padding: 5px 0; border-bottom: 1px solid #21262d; }
         .detail-label { color: #58a6ff; font-weight: bold; }
         
+        .random-btn {
+            display: block;
+            margin: 0 auto 20px auto;
+            background: #58a6ff;
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
         .theme-toggle {
             position: fixed;
             bottom: 20px;
@@ -113,8 +100,9 @@
         body.light .card { background: #ffffff; }
         body.light .card:hover { background: #f0f3f5; }
         body.light .modal-content { background: #ffffff; }
-        body.light input, body.light select, body.light .sort-select { background: #ffffff; color: #1f2328; border-color: #d0d7de; }
+        body.light input, body.light select { background: #ffffff; color: #1f2328; }
         body.light .theme-toggle { background: #ffffff; }
+        body.light .random-btn { background: #0969da; }
     </style>
 </head>
 <body>
@@ -122,23 +110,12 @@
     
     <h1>🎬 Каталог медиафайлов</h1>
     
-    <div class="top-bar">
-        <select id="sortSelect" class="sort-select">
-            <option value="default">📊 По умолчанию</option>
-            <option value="year_asc">📅 Год (старые → новые)</option>
-            <option value="year_desc">📅 Год (новые → старые)</option>
-            <option value="title_asc">🔤 Название (А → Я)</option>
-            <option value="title_desc">🔤 Название (Я → А)</option>
-        </select>
-        <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
-    </div>
+    <button class="random-btn" id="randomBtn">🎲 Случайный фильм</button>
     
     <div class="filters">
-        <input type="text" id="search" placeholder="🔍 Поиск по названию, актёрам, режиссёру...">
+        <input type="text" id="search" placeholder="🔍 Поиск...">
         <select id="genre"><option value="">Все жанры</option></select>
         <select id="year"><option value="">Все годы</option></select>
-        <select id="country"><option value="">Все страны</option></select>
-        <select id="actor"><option value="">Все актеры</option></select>
     </div>
     
     <div class="stats" id="stats">Загрузка...</div>
@@ -156,10 +133,8 @@
         let movies = [];
         let filtered = [];
         let page = 1;
-        let currentSort = 'default';
         const perPage = 40;
         
-        // Тема
         const themeToggle = document.getElementById('themeToggle');
         if (localStorage.getItem('theme') === 'light') {
             document.body.classList.add('light');
@@ -172,79 +147,41 @@
             localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
         
-        // Сортировка
-        function sortMovies(arr) {
-            const sorted = [...arr];
-            switch(currentSort) {
-                case 'year_asc': sorted.sort((a,b) => (parseInt(a.year)||0) - (parseInt(b.year)||0)); break;
-                case 'year_desc': sorted.sort((a,b) => (parseInt(b.year)||0) - (parseInt(a.year)||0)); break;
-                case 'title_asc': sorted.sort((a,b) => a.title.localeCompare(b.title)); break;
-                case 'title_desc': sorted.sort((a,b) => b.title.localeCompare(a.title)); break;
-                default: break;
-            }
-            return sorted;
-        }
-        
         async function load() {
             try {
                 const res = await fetch('./movies.json');
                 const data = await res.json();
                 movies = data.movies;
                 
-                // Заполняем фильтры
                 const genres = new Set();
                 const years = new Set();
-                const countries = new Set();
-                const actors = new Set();
-                
                 for (let m of movies) {
-                    if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g && g.trim()) genres.add(g.trim()); });
+                    if (m.genre) m.genre.split(/[,/]/).forEach(g => { if(g.trim()) genres.add(g.trim()); });
                     if (m.year && m.year !== '—') years.add(m.year);
-                    if (m.country && m.country !== '—') countries.add(m.country);
-                    if (m.actors) m.actors.split(/[,;]/).forEach(a => { if(a && a.trim() && a.length > 2) actors.add(a.trim()); });
                 }
-                
                 const genreSel = document.getElementById('genre');
                 const yearSel = document.getElementById('year');
-                const countrySel = document.getElementById('country');
-                const actorSel = document.getElementById('actor');
-                
-                genreSel.innerHTML = '<option value="">Все жанры</option>';
-                yearSel.innerHTML = '<option value="">Все годы</option>';
-                countrySel.innerHTML = '<option value="">Все страны</option>';
-                actorSel.innerHTML = '<option value="">Все актеры</option>';
-                
-                [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${escape(g)}">${escape(g).substring(0, 45)}</option>`);
-                [...years].sort((a,b)=>parseInt(b)-parseInt(a)).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
-                [...countries].sort().forEach(c => countrySel.innerHTML += `<option value="${escape(c)}">${escape(c).substring(0, 45)}</option>`);
-                [...actors].sort().forEach(a => actorSel.innerHTML += `<option value="${escape(a)}">${escape(a).substring(0, 45)}</option>`);
+                [...genres].sort().forEach(g => genreSel.innerHTML += `<option value="${g}">${g.substring(0, 50)}</option>`);
+                [...years].sort((a,b)=>b-a).forEach(y => yearSel.innerHTML += `<option value="${y}">${y}</option>`);
                 
                 filtered = [...movies];
-                applyFilter();
-                
+                render();
             } catch(e) {
                 document.getElementById('stats').innerHTML = 'Ошибка: ' + e.message;
             }
         }
         
-        function applyFilter() {
+        function filter() {
             const search = document.getElementById('search').value.toLowerCase();
             const genre = document.getElementById('genre').value;
             const year = document.getElementById('year').value;
-            const country = document.getElementById('country').value;
-            const actor = document.getElementById('actor').value;
             
-            let result = movies.filter(m => {
-                const searchFields = [m.title, m.originalTitle, m.genre, m.actors, m.director, m.country].join(' ').toLowerCase();
-                if (search && !searchFields.includes(search)) return false;
+            filtered = movies.filter(m => {
+                if (search && !m.title.toLowerCase().includes(search) && !(m.originalTitle || '').toLowerCase().includes(search)) return false;
                 if (genre && !(m.genre || '').includes(genre)) return false;
                 if (year && m.year !== year) return false;
-                if (country && !(m.country || '').includes(country)) return false;
-                if (actor && !(m.actors || '').includes(actor)) return false;
                 return true;
             });
-            
-            filtered = sortMovies(result);
             page = 1;
             render();
         }
@@ -256,12 +193,6 @@
             
             document.getElementById('stats').innerHTML = `🎬 ${filtered.length} из ${movies.length} фильмов | Стр. ${page} из ${totalPages || 1}`;
             
-            if (pageMovies.length === 0) {
-                document.getElementById('movies').innerHTML = '<div style="text-align:center">😔 Ничего не найдено</div>';
-                document.getElementById('pagination').innerHTML = '';
-                return;
-            }
-            
             let html = '';
             for (let m of pageMovies) {
                 html += `
@@ -272,7 +203,7 @@
                     </div>
                 `;
             }
-            document.getElementById('movies').innerHTML = html;
+            document.getElementById('movies').innerHTML = html || '<div style="text-align:center">😔 Ничего не найдено</div>';
             
             let pagHtml = '';
             if (totalPages > 1) {
@@ -293,11 +224,6 @@
             show(idx);
         });
         
-        document.getElementById('sortSelect').addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            applyFilter();
-        });
-        
         window.show = function(idx) {
             const m = movies[idx];
             if (!m) return;
@@ -307,7 +233,7 @@
             if (m.country) html += `<div class="detail-line"><span class="detail-label">Страна:</span> ${escape(m.country)}</div>`;
             if (m.genre) html += `<div class="detail-line"><span class="detail-label">Жанр:</span> ${escape(m.genre)}</div>`;
             if (m.director) html += `<div class="detail-line"><span class="detail-label">Режиссер:</span> ${escape(m.director)}</div>`;
-            if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 300)}</div>`;
+            if (m.actors) html += `<div class="detail-line"><span class="detail-label">Актеры:</span> ${escape(m.actors).substring(0, 250)}</div>`;
             if (m.description) html += `<div class="detail-line"><span class="detail-label">Описание:</span> ${escape(m.description)}</div>`;
             if (m.audioInfo) html += `<div class="detail-line"><span class="detail-label">Аудио:</span> ${escape(m.audioInfo).substring(0, 200)}</div>`;
             if (m.subtitles) html += `<div class="detail-line"><span class="detail-label">Субтитры:</span> ${escape(m.subtitles)}</div>`;
@@ -320,11 +246,9 @@
         
         function escape(s) { if (!s) return ''; return String(s).replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
         
-        document.getElementById('search').addEventListener('input', () => { setTimeout(applyFilter, 300); });
-        document.getElementById('genre').addEventListener('change', applyFilter);
-        document.getElementById('year').addEventListener('change', applyFilter);
-        document.getElementById('country').addEventListener('change', applyFilter);
-        document.getElementById('actor').addEventListener('change', applyFilter);
+        document.getElementById('search').addEventListener('input', filter);
+        document.getElementById('genre').addEventListener('change', filter);
+        document.getElementById('year').addEventListener('change', filter);
         document.getElementById('closeModal').onclick = () => document.getElementById('modal').style.display = 'none';
         window.onclick = (e) => { if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; };
         
