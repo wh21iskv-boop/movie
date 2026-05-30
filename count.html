@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>Счетчик фильмов</title></head>
+<body>
+    <h1>Подсчет фильмов в movies.json</h1>
+    <div id="result">Загрузка...</div>
+    <script>
+        fetch('./movies.json')
+            .then(r => r.json())
+            .then(data => {
+                const total = data.movies.length;
+                document.getElementById('result').innerHTML = `
+                    <p>✅ Всего фильмов: <strong>${total}</strong></p>
+                    <p>Пример первых 3-х:</p>
+                    <ul>
+                        ${data.movies.slice(0, 3).map(m => `<li>${m.title} (${m.year})</li>`).join('')}
+                    </ul>
+                `;
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = 'Ошибка: ' + err.message;
+            });
+    </script>
+</body>
+</html>
