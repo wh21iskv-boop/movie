@@ -350,40 +350,61 @@
 
             // 2. Формируем блок кнопок-ссылок
             if (searchQuery || (m.kinopoiskLink && m.kinopoiskLink.startsWith('http'))) {
-                let buttonsHtml = '<div class="detail-line movie-buttons-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">';
+                let buttonsHtml = '<div class="detail-line movie-buttons-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; width: 100%; box-sizing: border-box;">';
 
                 // Генерируем символы / и ? через коды, чтобы движок сайта их гарантированно не вырезал
                 const slash = String.fromCharCode(47);
                 const question = String.fromCharCode(63);
 
-                // SVG-код логотипа Кинориума
-                const kinoriumSvg = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4h-2V7h2v6.5z"/></svg>';
+                // Базовые инлайновые стили для кнопок (фиксируем размер иконки внутри через стиль svg)
+                const baseBtnStyle = 'display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; color: #ffffff !important; text-decoration: none !important; border-radius: 8px; font-weight: bold; font-size: 14px; transition: background-color 0.2s ease, transform 0.1s ease; flex: 1 1 160px; text-align: center; cursor: pointer; box-sizing: border-box;';
+                const svgStyle = 'width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; display: inline-block; vertical-align: middle;';
+
+                // SVG-код логотипа Кинориума (сразу зажимаем его в рамки svgStyle)
+                const kinoriumSvg = '<svg style="' + svgStyle + '" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4h-2V7h2v6.5z"/></svg>';
                 
                 // SVG-код логотипа Кинопоиска (буква К)
-                const kinopoiskSvg = '<svg viewBox="0 0 24 24"><path d="M18.15 2h-4.32l-5.18 7.39V2H4.94v20h3.71v-6.93l5.52 6.93h4.48l-6.84-8.31L18.15 2z"/></svg>';
+                const kinopoiskSvg = '<svg style="' + svgStyle + '" viewBox="0 0 24 24"><path d="M18.15 2h-4.32l-5.18 7.39V2H4.94v20h3.71v-6.93l5.52 6.93h4.48l-6.84-8.31L18.15 2z"/></svg>';
 
                 // Кнопка Кинориум
                 if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
                     const kinoriumLink = 'https:' + slash + slash + '://kinorium.com' + slash + 'search' + slash + question + 'q=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" class="movie-btn kinorium-btn">' + kinoriumSvg + 'Кинориум</a>';
+                    
+                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" ' +
+                        'style="' + baseBtnStyle + ' background-color: #ffaa00;" ' +
+                        'onmouseover="this.style.backgroundColor=\'#e09500\'" ' +
+                        'onmouseout="this.style.backgroundColor=\'#ffaa00\'" ' +
+                        'onmousedown="this.style.transform=\'scale(0.97)\'" ' +
+                        'onmouseup="this.style.transform=\'scale(1)\'">' + 
+                        kinoriumSvg + 'Кинориум</a>';
                 }
 
                 // Кнопка Кинопоиск
                 if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
-                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" class="movie-btn kinopoisk-btn">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" ' +
+                        'style="' + baseBtnStyle + ' background-color: #ff6600;" ' +
+                        'onmouseover="this.style.backgroundColor=\'#e05500\'" ' +
+                        'onmouseout="this.style.backgroundColor=\'#ff6600\'" ' +
+                        'onmousedown="this.style.transform=\'scale(0.97)\'" ' +
+                        'onmouseup="this.style.transform=\'scale(1)\'">' + 
+                        kinopoiskSvg + 'Кинопоиск</a>';
                 } else if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
                     const kpSearchLink = 'https:' + slash + slash + 'www.kinopoisk.ru' + slash + 'index.php' + question + 'kp_query=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" class="movie-btn kinopoisk-btn">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    
+                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" ' +
+                        'style="' + baseBtnStyle + ' background-color: #ff6600;" ' +
+                        'onmouseover="this.style.backgroundColor=\'#e05500\'" ' +
+                        'onmouseout="this.style.backgroundColor=\'#ff6600\'" ' +
+                        'onmousedown="this.style.transform=\'scale(0.97)\'" ' +
+                        'onmouseup="this.style.transform=\'scale(1)\'">' + 
+                        kinopoiskSvg + 'Кинопоиск</a>';
                 }
 
                 buttonsHtml += '</div>';
                 html += buttonsHtml;
             }
-
-
-
 
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('modal').style.display = 'flex';
