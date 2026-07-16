@@ -350,32 +350,26 @@
 
             // 2. Формируем блок кнопок-ссылок
             if (searchQuery || (m.kinopoiskLink && m.kinopoiskLink.startsWith('http'))) {
-                let buttonsHtml = '<div class="detail-line movie-buttons-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">';
+                let buttonsHtml = '<div class="detail-line movie-buttons-row" style="display: flex; gap: 10px; margin-top: 15px;">';
 
                 // Генерируем символы / и ? через коды, чтобы движок сайта их гарантированно не вырезал
-                const slash = String.fromCharCode(47);
-                const question = String.fromCharCode(63);
+                const slash = String.fromCharCode(47); // Символ "/"
+                const question = String.fromCharCode(63); // Символ "?"
 
-                // SVG-код логотипа Кинориума
-                const kinoriumSvg = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4h-2V7h2v6.5z"/></svg>';
-                
-                // SVG-код логотипа Кинопоиска (буква К)
-                const kinopoiskSvg = '<svg viewBox="0 0 24 24"><path d="M18.15 2h-4.32l-5.18 7.39V2H4.94v20h3.71v-6.93l5.52 6.93h4.48l-6.84-8.31L18.15 2z"/></svg>';
-
-                // Кнопка Кинориум
+                // Кнопка Кинориум (Показывается только если есть текст для поиска)
                 if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
-                    const kinoriumLink = 'https:' + slash + slash + '://kinorium.com' + slash + 'search' + slash + question + 'q=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" class="movie-btn kinorium-btn">' + kinoriumSvg + 'Кинориум</a>';
+                    const kinoriumLink = 'https:' + slash + slash + 'ru.kinorium.com' + slash + 'search' + slash + question + 'q=' + encodedQuery;
+                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" class="movie-btn kinorium-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ffaa00; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинориум</a>';
                 }
 
-                // Кнопка Кинопоиск
+                // Кнопка Кинопоиск (Прямая ссылка или поиск, если ссылки нет)
                 if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
-                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" class="movie-btn kinopoisk-btn">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" class="movie-btn kinopoisk-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ff6600; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинопоиск</a>';
                 } else if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
                     const kpSearchLink = 'https:' + slash + slash + 'www.kinopoisk.ru' + slash + 'index.php' + question + 'kp_query=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" class="movie-btn kinopoisk-btn">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" class="movie-btn kinopoisk-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ff6600; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинопоиск</a>';
                 }
 
                 buttonsHtml += '</div>';
