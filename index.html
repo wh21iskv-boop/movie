@@ -336,19 +336,42 @@
               }
             }
 
-            if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
-                html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
+            // Собираем поисковый запрос (Название + Год) для Кинориума и поиска Кинопоиска
+            let searchQuery = '';
+            if (m.originalTitle) {
+                searchQuery = m.originalTitle.trim();
+            } else if (m.title) {
+                searchQuery = m.title.trim();
             }
 
-            if (m.originalTitle) {
-                let searchQuery = m.originalTitle.trim();
-                if (m.year) {
-                    searchQuery += ` ${m.year}`;
-                }
-                const encodedQuery = encodeURIComponent(searchQuery);
-                const kinoriumLink = `https://ru.kinorium.com/search/?q=${encodedQuery}`;
-                html += `<div class="detail-line"><a href="${kinoriumLink}" target="_blank">🎬 Кинориум</a></div>`;
+            if (searchQuery && m.year) {
+                searchQuery += ' ' + m.year;
             }
+
+            // Формируем блок кнопок-ссылок
+            if (searchQuery || (m.kinopoiskLink && m.kinopoiskLink.startsWith('http'))) {
+                let buttonsHtml = '<div class="detail-line movie-buttons-row" style="display: flex; gap: 10px; margin-top: 15px;">';
+
+                // 1. Кнопка Кинориум (Поиск по названию + году)
+                if (searchQuery) {
+                    const encodedQuery = encodeURIComponent(searchQuery);
+                    const kinoriumLink = 'https://kinorium.com' + encodedQuery;
+                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" class="movie-btn kinorium-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ffaa00; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинориум</a>';
+                }
+
+                // 2. Кнопка Кинопоиск (Прямая ссылка или поиск, если ссылки нет)
+                if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
+                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" class="movie-btn kinopoisk-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ff6600; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинопоиск</a>';
+                } else if (searchQuery) {
+                    const encodedQuery = encodeURIComponent(searchQuery);
+                    const kpSearchLink = 'https://kinopoisk.ru' + encodedQuery;
+                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" class="movie-btn kinopoisk-btn" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; background-color: #ff6600; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: background 0.2s;">🎬 Кинопоиск</a>';
+                }
+
+                buttonsHtml += '</div>';
+                html += buttonsHtml;
+            }
+
 
 
             document.getElementById('modalBody').innerHTML = html;
