@@ -346,9 +346,10 @@
                     searchQuery += ` ${m.year}`;
                 }
                 const encodedQuery = encodeURIComponent(searchQuery);
-                const kinoriumLink = `https://kinorium.com{encodedQuery}`;
+                const kinoriumLink = `https://ru.kinorium.com/search/?q=${encodedQuery}`;
                 html += `<div class="detail-line"><a href="${kinoriumLink}" target="_blank">🎬 Кинориум</a></div>`;
             }
+
 
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('modal').style.display = 'flex';
