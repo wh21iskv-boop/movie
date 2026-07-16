@@ -339,6 +339,17 @@
             if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
                 html += `<div class="detail-line"><a href="${escape(m.kinopoiskLink)}" target="_blank">🎬 Кинопоиск</a></div>`;
             }
+
+            if (m.originalTitle) {
+                let searchQuery = m.originalTitle.trim();
+                if (m.year) {
+                    searchQuery += ` ${m.year}`;
+                }
+                const encodedQuery = encodeURIComponent(searchQuery);
+                const kinoriumLink = `https://kinorium.com{encodedQuery}`;
+                html += `<div class="detail-line"><a href="${kinoriumLink}" target="_blank">🎬 Кинориум</a></div>`;
+            }
+
             document.getElementById('modalBody').innerHTML = html;
             document.getElementById('modal').style.display = 'flex';
         };
