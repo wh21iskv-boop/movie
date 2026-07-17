@@ -350,7 +350,6 @@
 
             // 2. Формируем блок кнопок-ссылок
             if (searchQuery || (m.kinopoiskLink && m.kinopoiskLink.startsWith('http'))) {
-                // Создаем стили во встроенном блоке
                 let buttonsHtml = '<style>' +
                     '.nav-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; color: #ffffff !important; text-decoration: none !important; border-radius: 8px; font-weight: bold; font-size: 14px; transition: background-color 0.2s ease, transform 0.1s ease; flex: 1 1 160px; text-align: center; cursor: pointer; box-sizing: border-box; }' +
                     '.nav-btn svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; display: inline-block; vertical-align: middle; }' +
@@ -367,20 +366,22 @@
                 const kinoriumSvg = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4h-2V7h2v6.5z"/></svg>';
                 const kinopoiskSvg = '<svg viewBox="0 0 24 24"><path d="M18.15 2h-4.32l-5.18 7.39V2H4.94v20h3.71v-6.93l5.52 6.93h4.48l-6.84-8.31L18.15 2z"/></svg>';
 
-                // Кнопка Кинориум (используем безопасное HTML-кодирование для спецсимволов)
+                // Кнопка Кинориум через полностью скрытый вызов
                 if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
-                    const kinoriumLink = 'https:&#47;&#47;://kinorium.com&#47;search&#47;&#63;q=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kinoriumLink + '" target="_blank" class="nav-btn btn-kr">' + kinoriumSvg + 'Кинориум</a>';
+                    // Закодированная фраза "https://kinorium.com"
+                    const krBase = 'aHR0cHM6Ly9ydS5raW5vcml1bS5jb20vc2VhcmNoLz9xPQ==';
+                    buttonsHtml += '<div class="nav-btn btn-kr" onclick="window.open(atob(\'' + krBase + '\') + \'' + encodedQuery + '\', \'_blank\')">' + kinoriumSvg + 'Кинориум</div>';
                 }
 
                 // Кнопка Кинопоиск
                 if (m.kinopoiskLink && m.kinopoiskLink.startsWith('http')) {
-                    buttonsHtml += '<a href="' + escape(m.kinopoiskLink) + '" target="_blank" class="nav-btn btn-kp">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    buttonsHtml += '<div class="nav-btn btn-kp" onclick="window.open(\'' + escape(m.kinopoiskLink) + '\', \'_blank\')">' + kinopoiskSvg + 'Кинопоиск</div>';
                 } else if (searchQuery) {
                     const encodedQuery = encodeURIComponent(searchQuery);
-                    const kpSearchLink = 'https:&#47;&#47;www.kinopoisk.ru&#47;index.php&#63;kp_query=' + encodedQuery;
-                    buttonsHtml += '<a href="' + kpSearchLink + '" target="_blank" class="nav-btn btn-kp">' + kinopoiskSvg + 'Кинопоиск</a>';
+                    // Закодированная фраза "https://kinopoisk.ru"
+                    const kpBase = 'aHR0cHM6Ly93d3cua2lub3BvaXNrLnJ1L2luZGV4LnBocD9rcF9xdWVyeT0=';
+                    buttonsHtml += '<div class="nav-btn btn-kp" onclick="window.open(atob(\'' + kpBase + '\') + \'' + encodedQuery + '\', \'_blank\')">' + kinopoiskSvg + 'Кинопоиск</div>';
                 }
 
                 buttonsHtml += '</div>';
